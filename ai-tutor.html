@@ -1,0 +1,230 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#091119">
+<title>WebChem | Chemistry AI Tutor</title>
+<style>
+:root {
+  --bg:#091119; --panel:#101c27; --line:#29404d;
+  --text:#eef7fa; --muted:#9cb0bb; --mint:#7af0c6;
+}
+* { box-sizing:border-box }
+body {
+  margin:0; background:radial-gradient(ellipse at 80% 0,#153d40,transparent 40%),var(--bg);
+  color:var(--text); font:15px/1.55 system-ui, sans-serif;
+}
+button,input,select { font:inherit }
+button { cursor:pointer }
+.wrap { max-width:1100px; margin:auto; padding:22px }
+header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:24px }
+.brand { display:flex; align-items:center; gap:12px; font-weight:800; font-size:20px }
+.logo { background:var(--mint); color:#08251e; border-radius:13px; padding:8px 12px; font-size:25px }
+a { color:var(--mint); text-decoration:none }
+.hero { padding:28px; border:1px solid #2b514e; border-radius:22px; background:linear-gradient(125deg,#143d39,#132a37); margin-bottom:18px }
+.eyebrow { color:var(--mint); font-size:11px; letter-spacing:2px; font-weight:800 }
+h1 { font-size:clamp(30px,5vw,48px); line-height:1.1; margin:12px 0 }
+.muted { color:var(--muted) }
+.grid { display:grid; grid-template-columns:1.1fr .9fr; gap:18px }
+.panel { min-width:0; padding:20px; background:var(--panel); border:1px solid var(--line); border-radius:18px }
+h2 { margin:0 0 5px; font-size:21px }
+.small { font-size:12px }
+.chat { height:300px; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:12px; margin:15px 0; border:1px solid var(--line); border-radius:13px; background:#09131b }
+.bubble { max-width:95%; padding:11px 13px; border-radius:13px; white-space:pre-wrap; overflow-wrap:anywhere }
+.bot { align-self:flex-start; background:#172a34 }
+.user { align-self:flex-end; background:#174b42 }
+form { display:flex; gap:8px }
+input,select { width:100%; min-width:0; padding:11px; border:1px solid var(--line); border-radius:10px; background:#0b151d; color:var(--text) }
+button { padding:10px 13px; border:1px solid var(--line); border-radius:10px; background:#1b2b37; color:var(--text); font-weight:700 }
+.primary { background:var(--mint); border-color:var(--mint); color:#08251e }
+.chips { display:flex; flex-wrap:wrap; gap:7px; margin:14px 0 }
+.chips button { font-size:12px; border-radius:99px; padding:7px 10px }
+.fields { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+.field { display:grid; gap:6px; margin:12px 0 }
+label { font-size:12px; color:var(--muted) }
+.result { margin-top:14px; padding:14px; border:1px solid #28675a; border-radius:12px; background:#102d29 }
+.result strong { display:block; color:var(--mint); font-size:23px; overflow-wrap:anywhere }
+.result p { margin:6px 0 0; font-size:13px }
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:18px }
+.card { padding:16px; background:var(--panel); border:1px solid var(--line); border-radius:15px }
+.card b { display:block; margin:7px 0 }
+footer { text-align:center; color:var(--muted); font-size:12px; padding:25px }
+@media(max-width:760px) {
+  .grid,.cards { grid-template-columns:1fr }
+  .wrap { padding:13px }
+  .hero { padding:21px }
+  .chat { height:260px }
+  header { align-items:flex-start }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <div class="brand"><span class="logo">⚛</span><span>WebChem<small class="muted" style="display:block;font-size:10px;letter-spacing:1.5px">CHEMISTRY LEARNING LAB</small></span></div>
+  <a href="./">← Dashboard</a>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">YOUR CHEMISTRY COMPANION</div>
+  <h1>Understand the why.<br>Master the how.</h1>
+  <p class="muted">Explore chemistry concepts and practise calculations with guided explanations.</p>
+</section>
+
+<div class="grid">
+<section class="panel">
+  <h2>Ask the Chemistry Tutor</h2>
+  <p class="muted small">Choose a topic or type your question.</p>
+  <div class="chips">
+    <button data-q="Explain molarity with an example">Molarity</button>
+    <button data-q="Explain normality">Normality</button>
+    <button data-q="What is urea and its formula?">Urea</button>
+    <button data-q="Explain the principle of XRF">XRF</button>
+    <button data-q="Explain the principle of XRD">XRD</button>
+    <button data-q="Explain oxidation number rules">Oxidation number</button>
+  </div>
+  <div id="chat" class="chat" aria-live="polite">
+    <div class="bubble bot">Hi! I'm the WebChem tutor prototype. Ask about molarity, normality, urea, XRF, XRD, pH or oxidation numbers. This version uses built-in explanations; live AI is not connected yet.</div>
+  </div>
+  <form id="askForm">
+    <input id="question" placeholder="Ask a chemistry question..." aria-label="Chemistry question" autocomplete="off">
+    <button class="primary" type="submit">Ask</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Chemistry Calculator</h2>
+  <p class="muted small">Calculate molarity or dilution, with working.</p>
+  <div class="field">
+    <label for="mode">Calculation type</label>
+    <select id="mode">
+      <option value="molarity">Molarity (mol/L)</option>
+      <option value="dilution">Dilution (C₁V₁ = C₂V₂)</option>
+    </select>
+  </div>
+
+  <div id="molarityFields">
+    <div class="fields">
+      <div class="field"><label for="moles">Solute amount (mol)</label><input id="moles" type="number" min="0" step="any" value="0.5"></div>
+      <div class="field"><label for="volume">Final volume (L)</label><input id="volume" type="number" min="0" step="any" value="1"></div>
+    </div>
+  </div>
+
+  <div id="dilutionFields" hidden>
+    <div class="field"><label for="c1">Stock concentration C₁</label><input id="c1" type="number" min="0" step="any" value="2"></div>
+    <div class="fields">
+      <div class="field"><label for="v1">Stock volume V₁ (mL)</label><input id="v1" type="number" min="0" step="any" value="25"></div>
+      <div class="field"><label for="v2">Final volume V₂ (mL)</label><input id="v2" type="number" min="0" step="any" value="100"></div>
+    </div>
+  </div>
+
+  <button id="calculate" class="primary">Calculate</button>
+  <div id="calcResult" class="result" aria-live="polite"></div>
+</section>
+</div>
+
+<section class="cards">
+  <article class="card"><span>🧪</span><b>Learn concepts</b><div class="muted small">Build understanding before memorising formulas.</div></article>
+  <article class="card"><span>🧮</span><b>Practise calculations</b><div class="muted small">See the formula and values used.</div></article>
+  <article class="card"><span>🎯</span><b>Coming next</b><div class="muted small">Virtual lab, quizzes, periodic table and career academy.</div></article>
+</section>
+
+<footer>WebChem 2.0 · Tutor prototype · No production systems changed</footer>
+</main>
+
+<script>
+const chat = document.getElementById('chat');
+const question = document.getElementById('question');
+
+function bubble(text, role) {
+  const node = document.createElement('div');
+  node.className = 'bubble ' + role;
+  node.textContent = text;
+  chat.appendChild(node);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function answerFor(questionText) {
+  const q = questionText.toLowerCase();
+
+  if (q.includes('molarity')) return
+    'Molarity (M) is moles of solute divided by the final solution volume in litres.\nFormula: M = n / V.\nExample: 0.5 mol in 1 L gives 0.5 mol/L.';
+  if (q.includes('normality')) return
+    'Normality (N) is gram-equivalents per litre of solution.\nFormula: N = equivalents / volume (L). When appropriate, N = M × n-factor. The n-factor depends on the reaction.';
+  if (q.includes('urea') || q.includes('fertilizer')) return
+    'Urea has formula CO(NH₂)₂ and is widely used as a nitrogen fertilizer. It contains approximately 46% nitrogen by mass. Correct application depends on crop, soil and product guidance.';
+  if (q.includes('xrf')) return
+    'X-ray fluorescence (XRF) is used for elemental analysis. Primary X-rays excite atoms, which emit characteristic secondary X-rays. Their energies help identify elements; calibrated signal intensities can estimate concentrations.';
+  if (q.includes('xrd')) return
+    'X-ray diffraction (XRD) studies diffraction from ordered crystal structures. The pattern helps identify crystalline phases and estimate structural properties. XRF is primarily elemental analysis; XRD is primarily phase/crystal analysis.';
+  if (q.includes('oxidation')) return
+    'Oxidation-number rules: a free element has oxidation number 0; a monatomic ion has a value equal to its charge; the sum in a neutral compound is 0; in a polyatomic ion, the sum equals the ion charge. Oxygen is usually −2, with exceptions.';
+  if (q.includes('ph') || q.includes('acid') || q.includes('base')) return
+    'At about 25°C, pH below 7 is acidic, 7 is neutral, and above 7 is basic in the usual dilute aqueous context. The approximate relation is pH = −log₁₀[H⁺], with concentration in mol/L.';
+  if (q.includes('hello') || q.trim() === 'hi') return
+    'Hello! Ask me about molarity, normality, urea, XRF, XRD, pH or oxidation numbers. This prototype has not connected to a live AI model yet.';
+  return
+    'This topic is not covered by the built-in demo yet. I do not want to guess. A later backend integration will connect a real AI model and add reliable chemistry-focused answers.';
+}
+
+document.getElementById('askForm').addEventListener('submit', event => {
+  event.preventDefault();
+  const q = question.value.trim();
+  if (!q) return;
+  bubble(q, 'user');
+  question.value = '';
+  bubble(answerFor(q), 'bot');
+});
+
+document.querySelectorAll('[data-q]').forEach(button => {
+  button.addEventListener('click', () => {
+    question.value = button.dataset.q;
+    question.focus();
+  });
+});
+
+const mode = document.getElementById('mode');
+const result = document.getElementById('calcResult');
+
+function value(id) {
+  return Number(document.getElementById(id).value);
+}
+
+function calculate() {
+  const molarity = mode.value === 'molarity';
+  document.getElementById('molarityFields').hidden = !molarity;
+  document.getElementById('dilutionFields').hidden = molarity;
+
+  if (molarity) {
+    const n = value('moles');
+    const v = value('volume');
+    if (!Number.isFinite(n) || !Number.isFinite(v) || n < 0 || v <= 0) {
+      result.innerHTML = '<strong>Check your inputs</strong><p>Solute amount must be non-negative and final volume must be greater than zero.</p>';
+      return;
+    }
+    const m = n / v;
+    result.innerHTML = '<strong>' + m.toPrecision(5) + ' mol/L</strong><p>M = n / V = ' + n + ' mol / ' + v + ' L.</p>';
+  } else {
+    const c1 = value('c1');
+    const v1 = value('v1');
+    const v2 = value('v2');
+    if (![c1, v1, v2].every(Number.isFinite) || c1 < 0 || v1 < 0 || v2 <= 0) {
+      result.innerHTML = '<strong>Check your inputs</strong><p>Concentration and stock volume must be non-negative; final volume must be greater than zero.</p>';
+      return;
+    }
+    const c2 = c1 * v1 / v2;
+    result.innerHTML = '<strong>' + c2.toPrecision(5) + '</strong><p>C₂ = C₁ × V₁ / V₂ = ' + c1 + ' × ' + v1 + ' / ' + v2 + '. Result uses the same concentration units as C₁.</p>';
+  }
+}
+
+mode.addEventListener('change', calculate);
+document.getElementById('calculate').addEventListener('click', calculate);
+['moles','volume','c1','v1','v2'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calculate);
+});
+calculate();
+</script>
+</body>
+</html>
