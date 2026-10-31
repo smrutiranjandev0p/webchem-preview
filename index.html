@@ -180,13 +180,13 @@
 const API='https://beneficial-balance-staging.up.railway.app';
 function solveChemistryExpression(input){
  const q=String(input||'').trim();
- const m=q.match(/^(\\d+(?:\\.\\d+)?)\\s*(mmol|mol|mg|g)\\s*(?:\\/|\\bin\\b)\\s*(\\d+(?:\\.\\d+)?)\\s*(mL|ml|L|litres?|liters?)$/i);
+ const m=q.match(/^(\d+(?:\.\d+)?)\s*(mmol|mol|mg|g)\s*(?:\/|\bin\b)\s*(\d+(?:\.\d+)?)\s*(mL|ml|L|litres?|liters?)$/i);
  if(!m)return null;
  const amount=Number(m[1]),au=m[2].toLowerCase(),volume=Number(m[3]),vu=m[4].toLowerCase();
  if(!Number.isFinite(amount)||!Number.isFinite(volume)||amount<0||volume<=0)return 'Please enter a positive volume and a non-negative amount.';
  const isMole=au==='mol'||au==='mmol';
  const amountBase=amount*(au==='mmol'?0.001:au==='mg'?0.001:1);
- const volumeL=volume/(vu==='ml'||vu==='ml'?1000:1);
+ const volumeL=volume/(vu==='ml'?1000:1);
  const value=amountBase/volumeL;
  const unit=isMole?'mol/L':'g/L';
  const label=isMole?'Molar concentration':'Mass concentration';
