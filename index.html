@@ -82,7 +82,20 @@
 @keyframes fbIdlePause{0%,100%{translate:0 0}50%{translate:0 -7px}}
 @media(max-width:520px){#firebot-launch{width:68px!important;height:68px!important}}
 @media(prefers-reduced-motion:reduce){#firebot-launch{transition:none;animation:none!important}#firebot-launch .fb-mascot-stage,#firebot-launch .fb-mascot-stage img{animation:none!important}}
-.fb-rig{width:100%;height:100%;overflow:visible;display:block;filter:drop-shadow(0 0 8px #ff632c)}.fb-rig-head{transform-origin:110px 137px;animation:fbHeadLook 4.8s ease-in-out infinite}.fb-rig-eyes{transform-origin:110px 105px;animation:fbRigBlink 4.6s infinite}.fb-rig-arm{transform-box:view-box;transform-origin:50% 50%}.fb-arm-left{animation:fbArmLeft 1.05s ease-in-out infinite alternate}.fb-arm-right{animation:fbArmRight 1.05s ease-in-out infinite alternate}.fb-rig-legs .fb-leg-left{transform-box:view-box;transform-origin:86px 185px;animation:fbLegLeft .7s ease-in-out infinite alternate}.fb-rig-legs .fb-leg-right{transform-box:view-box;transform-origin:133px 185px;animation:fbLegRight .7s ease-in-out infinite alternate}.fb-rig-body{transform-box:view-box;transform-origin:110px 180px;animation:fbTorsoWalk .7s ease-in-out infinite alternate}.fb-rig-flame{transform-origin:110px 80px;animation:fbRigFire .38s ease-in-out infinite alternate;filter:drop-shadow(0 0 7px #ff4a22)}@keyframes fbHeadLook{0%,100%{transform:rotate(0)}22%{transform:rotate(-5deg)}48%{transform:rotate(3deg)}72%{transform:rotate(0)}}@keyframes fbRigBlink{0%,42%,46%,88%,92%,100%{transform:scaleY(1)}44%,90%{transform:scaleY(.08)}}@keyframes fbArmLeft{from{transform:rotate(-13deg)}to{transform:rotate(13deg)}}@keyframes fbArmRight{from{transform:rotate(13deg)}to{transform:rotate(-13deg)}}@keyframes fbLegLeft{from{transform:rotate(10deg)}to{transform:rotate(-10deg)}}@keyframes fbLegRight{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}@keyframes fbTorsoWalk{from{transform:translateY(1px) rotate(-1deg)}to{transform:translateY(-3px) rotate(1deg)}}@keyframes fbRigFire{from{transform:scale(.94) skewX(-3deg)}to{transform:scale(1.08) skewX(4deg)}}#firebot-launch .fb-rig{width:100%;height:100%}#firebot-panel .fb-head .fb-rig{width:58px;height:55px}#firebot-panel .fb-row .fb-rig{width:45px;height:45px}@media(prefers-reduced-motion:reduce){.fb-rig-head,.fb-rig-eyes,.fb-rig-arm,.fb-rig-legs .fb-leg-left,.fb-rig-legs .fb-leg-right,.fb-rig-body,.fb-rig-flame{animation:none!important}}</style></head><body><div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">W</div><div><b>webchem<span style="color:var(--mint)">.</span></b><small>the chemistry lab</small></div></div><div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-view="home"><span class="ico">⌂</span>Overview</button><button data-view="learn"><span class="ico">▤</span>Learn</button><button data-view="lab"><span class="ico">⚗</span>Virtual lab</button><button data-view="tools"><span class="ico">⌘</span>Calculators</button><button data-view="quiz"><span class="ico">✳</span>Quiz zone</button><button data-view="progress"><span class="ico">◴</span>My progress</button><button data-view="tutor"><span class="ico">🤖</span>AI Tutor</button></nav></div><div class="sidebottom"><span style="font-size:22px">✦</span><strong>Curiosity looks good on you.</strong><p>Small lessons. Big reactions. Keep exploring.</p><button class="btn small" onclick="navigate('learn')">Explore lessons ↗</button></div></aside><main class="main"><header class="topbar"><div class="crumb">Workspace <span style="color:#50636e">/</span> <b id="crumb">Overview</b></div><div class="topactions"><label class="search"><span>⌕</span><input id="globalSearch" placeholder="Search chemistry…" aria-label="Search chemistry"></label><span id="authStatus" class="authstatus">Guest mode</span><button id="authOpenBtn" class="authbtn primary" onclick="openAuth('login')">Sign in</button><button id="authLogoutBtn" class="authbtn" onclick="logout()" style="display:none">Log out</button><button class="avatar" title="Learner profile" onclick="navigate('progress')">S</button></div></header>
+.fb-rig{width:100%;height:100%;overflow:visible;display:block;filter:drop-shadow(0 0 8px #ff632c)}.fb-rig-head{transform-origin:110px 137px;animation:fbHeadLook 4.8s ease-in-out infinite}.fb-rig-eyes{transform-origin:110px 105px;animation:fbRigBlink 4.6s infinite}.fb-rig-arm{transform-box:view-box;transform-origin:50% 50%}.fb-arm-left{animation:fbArmLeft 1.05s ease-in-out infinite alternate}.fb-arm-right{animation:fbArmRight 1.05s ease-in-out infinite alternate}.fb-rig-legs .fb-leg-left{transform-box:view-box;transform-origin:86px 185px;animation:fbLegLeft .7s ease-in-out infinite alternate}.fb-rig-legs .fb-leg-right{transform-box:view-box;transform-origin:133px 185px;animation:fbLegRight .7s ease-in-out infinite alternate}.fb-rig-body{transform-box:view-box;transform-origin:110px 180px;animation:fbTorsoWalk .7s ease-in-out infinite alternate}.fb-rig-flame{transform-origin:110px 80px;animation:fbRigFire .38s ease-in-out infinite alternate;filter:drop-shadow(0 0 7px #ff4a22)}@keyframes fbHeadLook{0%,100%{transform:rotate(0)}22%{transform:rotate(-5deg)}48%{transform:rotate(3deg)}72%{transform:rotate(0)}}@keyframes fbRigBlink{0%,42%,46%,88%,92%,100%{transform:scaleY(1)}44%,90%{transform:scaleY(.08)}}@keyframes fbArmLeft{from{transform:rotate(-13deg)}to{transform:rotate(13deg)}}@keyframes fbArmRight{from{transform:rotate(13deg)}to{transform:rotate(-13deg)}}@keyframes fbLegLeft{from{transform:rotate(10deg)}to{transform:rotate(-10deg)}}@keyframes fbLegRight{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}@keyframes fbTorsoWalk{from{transform:translateY(1px) rotate(-1deg)}to{transform:translateY(-3px) rotate(1deg)}}@keyframes fbRigFire{from{transform:scale(.94) skewX(-3deg)}to{transform:scale(1.08) skewX(4deg)}}#firebot-launch .fb-rig{width:100%;height:100%}#firebot-panel .fb-head .fb-rig{width:58px;height:55px}#firebot-panel .fb-row .fb-rig{width:45px;height:45px}@media(prefers-reduced-motion:reduce){.fb-rig-head,.fb-rig-eyes,.fb-rig-arm,.fb-rig-legs .fb-leg-left,.fb-rig-legs .fb-leg-right,.fb-rig-body,.fb-rig-flame{animation:none!important}}
+/* FireBot: remove the badge/circle and dock chat beside the mascot */
+#firebot-launch{width:92px!important;height:112px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;overflow:visible!important;padding:0!important}
+#firebot-launch:after{display:none!important}
+#firebot-launch .fb-flame-ring{display:none!important}
+#firebot-launch .fb-mascot-stage{width:100%!important;height:100%!important;overflow:visible!important;animation:none!important}
+#firebot-launch .fb-mascot-stage>.fb-rig{display:none!important}
+#firebot-launch .fb-mascot-stage>.fb-mascot-aura{display:none!important}
+#firebot-launch .fb-3d-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 10px #ff642e)}
+#firebot-panel{position:fixed!important;right:auto!important;bottom:auto!important;left:8px;top:8px;width:min(330px,calc(100vw - 112px))!important;max-width:calc(100vw - 96px)!important;min-width:220px;height:min(440px,calc(100vh - 32px))!important;max-height:calc(100vh - 32px)!important;transform:none!important;z-index:10000!important}
+#firebot-launch{z-index:10001!important}
+@media(max-width:520px){#firebot-launch{width:82px!important;height:100px!important}#firebot-panel{width:min(300px,calc(100vw - 100px))!important;min-width:190px;height:min(420px,calc(100vh - 24px))!important;max-height:calc(100vh - 24px)!important}}
+@media(prefers-reduced-motion:reduce){#firebot-launch .fb-3d-canvas{filter:none}}
+</style></head><body><div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">W</div><div><b>webchem<span style="color:var(--mint)">.</span></b><small>the chemistry lab</small></div></div><div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-view="home"><span class="ico">⌂</span>Overview</button><button data-view="learn"><span class="ico">▤</span>Learn</button><button data-view="lab"><span class="ico">⚗</span>Virtual lab</button><button data-view="tools"><span class="ico">⌘</span>Calculators</button><button data-view="quiz"><span class="ico">✳</span>Quiz zone</button><button data-view="progress"><span class="ico">◴</span>My progress</button><button data-view="tutor"><span class="ico">🤖</span>AI Tutor</button></nav></div><div class="sidebottom"><span style="font-size:22px">✦</span><strong>Curiosity looks good on you.</strong><p>Small lessons. Big reactions. Keep exploring.</p><button class="btn small" onclick="navigate('learn')">Explore lessons ↗</button></div></aside><main class="main"><header class="topbar"><div class="crumb">Workspace <span style="color:#50636e">/</span> <b id="crumb">Overview</b></div><div class="topactions"><label class="search"><span>⌕</span><input id="globalSearch" placeholder="Search chemistry…" aria-label="Search chemistry"></label><span id="authStatus" class="authstatus">Guest mode</span><button id="authOpenBtn" class="authbtn primary" onclick="openAuth('login')">Sign in</button><button id="authLogoutBtn" class="authbtn" onclick="logout()" style="display:none">Log out</button><button class="avatar" title="Learner profile" onclick="navigate('progress')">S</button></div></header>
 <section class="view active" id="view-home"><div class="hero"><div class="heroMain"><div class="eyebrow">YOUR PERSONAL CHEMISTRY SPACE</div><h1>Make chemistry<br>make sense.</h1><p>Explore the ideas behind every reaction. Learn at your pace, experiment safely, and turn curiosity into understanding.</p><button class="btn primary" onclick="navigate('learn')">Continue exploring <span>↗</span></button></div><div class="heroStats"><div class="statcard"><div><div class="label">Lessons explored</div><strong id="statLessons">0</strong></div><div class="staticon">▤</div></div><div class="statcard"><div><div class="label">Quiz points</div><strong id="statPoints">0</strong></div><div class="staticon" style="background:#302b20;color:var(--yellow)">✳</div></div><div class="statcard"><div><div class="label">Day streak</div><strong id="statStreak">0 days</strong></div><div class="staticon" style="background:#322431;color:var(--pink)">♨</div></div></div></div>
 <div class="sectionhead"><div><h2>Pick your next experiment</h2><p>Purpose-built spaces for learning, practising and discovering.</p></div><div class="chips"><button class="chip active" data-filter="all">All spaces</button><button class="chip" data-filter="study">Study</button><button class="chip" data-filter="practice">Practice</button></div></div><div class="grid" id="featureGrid"><article class="feature" data-category="study" onclick="navigate('learn')"><div class="featuretop"><div class="featureicon">📚</div><span class="arrow">↗</span></div><h3>Learning library</h3><p>Concept-first lessons from atoms to analytical chemistry.</p><span class="tag">GUIDED LEARNING</span></article><article class="feature" data-category="practice" onclick="navigate('lab')"><div class="featuretop"><div class="featureicon">⚗️</div><span class="arrow">↗</span></div><h3>Reaction explorer</h3><p>Explore balanced equations, reaction types and observations.</p><span class="tag">INTERACTIVE REFERENCE</span></article><article class="feature" data-category="practice" onclick="navigate('tools')"><div class="featuretop"><div class="featureicon">∑</div><span class="arrow">↗</span></div><h3>Scientific calculators</h3><p>Molar mass, molarity, dilution, pH and more.</p><span class="tag">INSTANT RESULTS</span></article><article class="feature" data-category="practice" onclick="navigate('quiz')"><div class="featuretop"><div class="featureicon">✳</div><span class="arrow">↗</span></div><h3>Quiz zone</h3><p>Test your understanding with quick chemistry challenges.</p><span class="tag">EARN POINTS</span></article><article class="feature" data-category="study" onclick="navigate('progress')"><div class="featuretop"><div class="featureicon">◴</div><span class="arrow">↗</span></div><h3>Your learning journey</h3><p>See completed lessons, quiz scores and earned badges.</p><span class="tag">PERSONAL PROGRESS</span></article><article class="feature" data-category="study" onclick="openModal('Periodic table','Explore selected elements and their atomic properties.')"><div class="featuretop"><div class="featureicon">▦</div><span class="arrow">↗</span></div><h3>Element quick guide</h3><p>Search common elements by symbol, number or name.</p><span class="tag">REFERENCE DESK</span></article></div>
 <div class="lower"><div class="panel"><h3>Pick up where you left off</h3><p class="muted" style="font-size:12px;margin:4px 0">Your progress is saved in this browser.</p><div id="continueList"></div></div><div class="panel"><h3>Learning snapshot</h3><p class="muted" style="font-size:12px;margin:4px 0 10px">Your activity at a glance</p><div class="activity"><span>Lessons completed</span><b id="actLessons">0</b></div><div class="activity"><span>Correct quiz answers</span><b id="actCorrect">0</b></div><div class="activity"><span>Calculations performed</span><b id="actCalc">0</b></div><div class="activity"><span>Badges earned</span><b id="actBadges">0</b></div></div></div></section>
@@ -288,5 +301,87 @@ function init(){let today=new Date().toISOString().slice(0,10);if(state.lastVisi
  bot.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopImmediatePropagation();moved=false;start()}},{capture:true});
  window.addEventListener('resize',()=>place(tx,ty,true));
  place(x,y,true);start();
+})();
+
+/* FireBot procedural 3D rig (Three.js); retains SVG fallback if WebGL/CDN is unavailable */
+(function(){
+ const bot=document.getElementById('firebot-launch'),panel=document.getElementById('firebot-panel');
+ if(!bot||!panel)return;
+ let renderer=null,scene=null,camera=null,robot=null,raf=0,resizeObs=null;
+ function positionChat(){
+   if(!panel.classList.contains('open'))return;
+   const r=bot.getBoundingClientRect(),w=panel.offsetWidth||300,h=panel.offsetHeight||420,g=12;
+   let left=r.left-w-g;
+   if(left<8){const right=r.right+g;if(right+w<=innerWidth-8)left=right;else left=Math.max(8,Math.min(innerWidth-w-8,r.left-w-g));}
+   const top=Math.max(8,Math.min(innerHeight-h-8,r.top+(r.height-h)/2));
+   panel.style.left=left+'px';panel.style.top=top+'px';
+ }
+ const mo=new MutationObserver(()=>{if(panel.classList.contains('open')){positionChat();stopRoaming()}});
+ mo.observe(panel,{attributes:true,attributeFilter:['class']});
+ const previousMove=window.addEventListener;
+ window.addEventListener('resize',positionChat);
+ function loadThree(){
+   if(window.THREE){init3D();return}
+   const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';sc.onload=init3D;sc.onerror=()=>console.warn('FireBot 3D unavailable; keeping vector fallback');document.head.appendChild(sc);
+ }
+ function mat(color,metalness=0.35,roughness=0.38,emissive=0){return new THREE.MeshStandardMaterial({color,metalness,roughness,emissive,emissiveIntensity:emissive?0.65:0})}
+ function init3D(){
+  if(!window.THREE)return;
+  document.querySelectorAll('#firebot-launch .fb-mascot-stage').forEach(stage=>{
+   if(stage.querySelector('.fb-3d-canvas'))return;
+   const canvas=document.createElement('canvas');canvas.className='fb-3d-canvas';stage.appendChild(canvas);
+   try{
+    renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.setSize(stage.clientWidth||90,stage.clientHeight||110,false);renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
+    scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(34,(stage.clientWidth||90)/(stage.clientHeight||110),.1,30);camera.position.set(0,1.45,5.2);camera.lookAt(0,1.15,0);
+    scene.add(new THREE.HemisphereLight(0xb9d9ff,0x301020,2));
+    const key=new THREE.PointLight(0xff8b38,34,9);key.position.set(2,3,3);scene.add(key);
+    const rim=new THREE.PointLight(0x4bdcff,18,8);rim.position.set(-2,1,2);scene.add(rim);
+    const root=new THREE.Group();scene.add(root);robot=root;
+    const dark=mat(0x202842,.72,.27),armor=mat(0x515c91,.65,.25),silver=mat(0xaab7d5,.7,.24),pink=mat(0xff438d,.45,.24,0xff164e),gold=mat(0xffc443,.25,.2,0xff8a12),eye=mat(0xffdc43,.1,.15,0xffa000),black=mat(0x090f20,.15,.28);
+    function box(parent,x,y,z,sx,sy,sz,m,bevel=0){const geo=new THREE.BoxGeometry(sx,sy,sz);const mesh=new THREE.Mesh(geo,m);mesh.position.set(x,y,z);parent.add(mesh);return mesh}
+    function sphere(parent,x,y,z,r,m,sx=1,sy=1,sz=1){const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),m);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh}
+    function limb(parent,len,r,m){const mesh=new THREE.Mesh(new THREE.CapsuleGeometry(r,Math.max(.05,len-r*2),4,8),m);mesh.position.y=-len/2;parent.add(mesh);return mesh}
+    // body and glowing chest core
+    const torso=new THREE.Group();torso.position.y=1.25;root.add(torso);
+    const chest=box(torso,0,0,0,.78,.78,.48,armor);chest.rotation.x=-.05;
+    box(torso,0,-.02,.252,.48,.47,.045,dark);
+    sphere(torso,0,-.02,.30,.14,pink,1,1,0.5);
+    sphere(torso,0,-.02,.355,.065,gold,1,1,.4);
+    // head pivot, helmet, visor and independent eye groups
+    const head=new THREE.Group();head.position.set(0,1.92,0);root.add(head);
+    sphere(head,0,0,0,.49,armor,1.05,.82,.8);
+    box(head,0,-.12,.32,.68,.42,.22,black);
+    const eyeL=new THREE.Group();eyeL.position.set(-.19,-.08,.445);head.add(eyeL);sphere(eyeL,0,0,0,.105,eye,1.05,1.25,.45);sphere(eyeL,.01,0,.04,.04,black);
+    const eyeR=new THREE.Group();eyeR.position.set(.19,-.08,.445);head.add(eyeR);sphere(eyeR,0,0,0,.105,eye,1.05,1.25,.45);sphere(eyeR,.01,0,.04,.04,black);
+    // shoulder/arm pivots and forearms
+    const arms=[];
+    for(const side of [-1,1]){const pivot=new THREE.Group();pivot.position.set(side*.47,1.48,0);root.add(pivot);sphere(pivot,0,0,0,.16,pink);limb(pivot,.43,.105,armor);const elbow=new THREE.Group();elbow.position.y=-.39;pivot.add(elbow);sphere(elbow,0,0,0,.105,gold);limb(elbow,.32,.085,silver);sphere(elbow,0,-.28,.015,.105,dark,1,.75,1);arms.push({pivot,elbow,side})}
+    // legs with separate thigh and shin pivots
+    const legs=[];
+    for(const side of [-1,1]){const hip=new THREE.Group();hip.position.set(side*.22,.92,0);root.add(hip);limb(hip,.43,.13,dark);sphere(hip,0,-.39,0,.14,pink);const shin=new THREE.Group();shin.position.y=-.4;hip.add(shin);limb(shin,.34,.105,silver);box(shin,0,-.48,.11,.32,.16,.43,dark);legs.push({hip,shin,side})}
+    // animated flame crown made of layered cones
+    const fireGroup=new THREE.Group();fireGroup.position.set(0,2.42,-.01);root.add(fireGroup);
+    const flameMat=new THREE.MeshStandardMaterial({color:0xff5522,emissive:0xff3b08,emissiveIntensity:1.5,roughness:.3});
+    const innerMat=new THREE.MeshStandardMaterial({color:0xffdc43,emissive:0xffa500,emissiveIntensity:1.7});
+    for(let j=0;j<5;j++){const cone=new THREE.Mesh(new THREE.ConeGeometry(.13+(j%2)*.04,.52+(j%3)*.12,9),j%2?flameMat:innerMat);cone.position.set((j-2)*.16,.12+Math.random()*.08,0);cone.rotation.z=(j-2)*-.18;fireGroup.add(cone)}
+    const sparks=[];const sparkMat=new THREE.MeshBasicMaterial({color:0xffa52e});
+    for(let j=0;j<18;j++){const p=new THREE.Mesh(new THREE.SphereGeometry(.018,6,6),sparkMat);scene.add(p);sparks.push({mesh:p,phase:Math.random()*Math.PI*2,r:.65+Math.random()*.5})}
+    const floorGlow=new THREE.Mesh(new THREE.CircleGeometry(.55,32),new THREE.MeshBasicMaterial({color:0xff5b22,transparent:true,opacity:.16,side:THREE.DoubleSide}));floorGlow.rotation.x=-Math.PI/2;floorGlow.position.y=.03;root.add(floorGlow);
+    const clock=new THREE.Clock();
+    function frame(){raf=requestAnimationFrame(frame);const t=clock.getElapsedTime();root.position.y=.06+Math.sin(t*3.1)*.055;root.rotation.y=Math.sin(t*.85)*.16;torso.rotation.z=Math.sin(t*3)*.025;head.rotation.y=Math.sin(t*1.4)*.22;head.rotation.z=Math.sin(t*2.1)*.035;
+      const blink=(Math.sin(t*1.7)>0.985||Math.sin(t*.91+2)>0.993)?.08:1;eyeL.scale.y=blink;eyeR.scale.y=blink;
+      arms.forEach(a=>{a.pivot.rotation.z=Math.sin(t*5+a.side)*.42*a.side;a.elbow.rotation.z=Math.sin(t*5+a.side+1)*.22});
+      legs.forEach(l=>{l.hip.rotation.x=Math.sin(t*5+l.side)*.42;l.shin.rotation.x=Math.max(0,Math.sin(t*5+l.side+1))*.5});
+      fireGroup.scale.set(1+Math.sin(t*13)*.1,1+Math.sin(t*17)*.2,1);fireGroup.rotation.z=Math.sin(t*8)*.1;
+      sparks.forEach(p=>{const a=t*1.6+p.phase;p.mesh.position.set(Math.cos(a)*p.r,1.4+((t*.55+p.phase)%1.8),Math.sin(a)*.25);});
+      renderer.render(scene,camera);
+    }
+    frame();
+    if(window.ResizeObserver){resizeObs=new ResizeObserver(()=>{const w=stage.clientWidth||90,h=stage.clientHeight||110;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()});resizeObs.observe(stage)}
+   }catch(err){console.warn('FireBot 3D fallback',err);canvas.remove()}
+  });
+ }
+ function stopRoaming(){/* the page roaming controller pauses while chat is open */}
+ loadThree();
 })();
 </script></body></html>
