@@ -95,6 +95,46 @@
 #firebot-launch{z-index:10001!important}
 @media(max-width:520px){#firebot-launch{width:82px!important;height:100px!important}#firebot-panel{width:min(300px,calc(100vw - 100px))!important;min-width:190px;height:min(420px,calc(100vh - 24px))!important;max-height:calc(100vh - 24px)!important}}
 @media(prefers-reduced-motion:reduce){#firebot-launch .fb-3d-canvas{filter:none}}
+
+/* Compact FireBot header so the conversation has more readable space */
+#firebot-panel .fb-head{
+  min-height:58px;
+  padding:7px 10px;
+  gap:8px;
+  flex:none;
+}
+#firebot-panel .fb-face{
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+}
+#firebot-panel .fb-head strong{
+  font-size:14px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+#firebot-panel .fb-head small{
+  display:block;
+  font-size:10px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+#firebot-panel .fb-head>div{
+  min-width:0;
+  flex:1;
+}
+#firebot-panel .fb-min,
+#firebot-panel .fb-close{
+  flex:0 0 auto;
+  font-size:20px;
+  padding:2px 5px;
+}
+@media(max-width:520px){
+  #firebot-panel .fb-head{min-height:52px;padding:6px 8px;gap:6px}
+  #firebot-panel .fb-face{width:34px;height:34px;flex-basis:34px}
+  #firebot-panel .fb-head strong{font-size:13px}
+  #firebot-panel .fb-head small{font-size:9px}
+}
 </style></head><body><div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">W</div><div><b>webchem<span style="color:var(--mint)">.</span></b><small>the chemistry lab</small></div></div><div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-view="home"><span class="ico">⌂</span>Overview</button><button data-view="learn"><span class="ico">▤</span>Learn</button><button data-view="lab"><span class="ico">⚗</span>Virtual lab</button><button data-view="tools"><span class="ico">⌘</span>Calculators</button><button data-view="quiz"><span class="ico">✳</span>Quiz zone</button><button data-view="progress"><span class="ico">◴</span>My progress</button><button data-view="tutor"><span class="ico">🤖</span>AI Tutor</button></nav></div><div class="sidebottom"><span style="font-size:22px">✦</span><strong>Curiosity looks good on you.</strong><p>Small lessons. Big reactions. Keep exploring.</p><button class="btn small" onclick="navigate('learn')">Explore lessons ↗</button></div></aside><main class="main"><header class="topbar"><div class="crumb">Workspace <span style="color:#50636e">/</span> <b id="crumb">Overview</b></div><div class="topactions"><label class="search"><span>⌕</span><input id="globalSearch" placeholder="Search chemistry…" aria-label="Search chemistry"></label><span id="authStatus" class="authstatus">Guest mode</span><button id="authOpenBtn" class="authbtn primary" onclick="openAuth('login')">Sign in</button><button id="authLogoutBtn" class="authbtn" onclick="logout()" style="display:none">Log out</button><button class="avatar" title="Learner profile" onclick="navigate('progress')">S</button></div></header>
 <section class="view active" id="view-home"><div class="hero"><div class="heroMain"><div class="eyebrow">YOUR PERSONAL CHEMISTRY SPACE</div><h1>Make chemistry<br>make sense.</h1><p>Explore the ideas behind every reaction. Learn at your pace, experiment safely, and turn curiosity into understanding.</p><button class="btn primary" onclick="navigate('learn')">Continue exploring <span>↗</span></button></div><div class="heroStats"><div class="statcard"><div><div class="label">Lessons explored</div><strong id="statLessons">0</strong></div><div class="staticon">▤</div></div><div class="statcard"><div><div class="label">Quiz points</div><strong id="statPoints">0</strong></div><div class="staticon" style="background:#302b20;color:var(--yellow)">✳</div></div><div class="statcard"><div><div class="label">Day streak</div><strong id="statStreak">0 days</strong></div><div class="staticon" style="background:#322431;color:var(--pink)">♨</div></div></div></div>
 <div class="sectionhead"><div><h2>Pick your next experiment</h2><p>Purpose-built spaces for learning, practising and discovering.</p></div><div class="chips"><button class="chip active" data-filter="all">All spaces</button><button class="chip" data-filter="study">Study</button><button class="chip" data-filter="practice">Practice</button></div></div><div class="grid" id="featureGrid"><article class="feature" data-category="study" onclick="navigate('learn')"><div class="featuretop"><div class="featureicon">📚</div><span class="arrow">↗</span></div><h3>Learning library</h3><p>Concept-first lessons from atoms to analytical chemistry.</p><span class="tag">GUIDED LEARNING</span></article><article class="feature" data-category="practice" onclick="navigate('lab')"><div class="featuretop"><div class="featureicon">⚗️</div><span class="arrow">↗</span></div><h3>Reaction explorer</h3><p>Explore balanced equations, reaction types and observations.</p><span class="tag">INTERACTIVE REFERENCE</span></article><article class="feature" data-category="practice" onclick="navigate('tools')"><div class="featuretop"><div class="featureicon">∑</div><span class="arrow">↗</span></div><h3>Scientific calculators</h3><p>Molar mass, molarity, dilution, pH and more.</p><span class="tag">INSTANT RESULTS</span></article><article class="feature" data-category="practice" onclick="navigate('quiz')"><div class="featuretop"><div class="featureicon">✳</div><span class="arrow">↗</span></div><h3>Quiz zone</h3><p>Test your understanding with quick chemistry challenges.</p><span class="tag">EARN POINTS</span></article><article class="feature" data-category="study" onclick="navigate('progress')"><div class="featuretop"><div class="featureicon">◴</div><span class="arrow">↗</span></div><h3>Your learning journey</h3><p>See completed lessons, quiz scores and earned badges.</p><span class="tag">PERSONAL PROGRESS</span></article><article class="feature" data-category="study" onclick="openModal('Periodic table','Explore selected elements and their atomic properties.')"><div class="featuretop"><div class="featureicon">▦</div><span class="arrow">↗</span></div><h3>Element quick guide</h3><p>Search common elements by symbol, number or name.</p><span class="tag">REFERENCE DESK</span></article></div>
