@@ -152,6 +152,17 @@
 .molecule-stage svg{width:100%;height:100%;max-width:360px}
 .molecule-info{color:var(--muted);font-size:13px}
 @media(max-width:760px){.lab-sim-grid{grid-template-columns:1fr}.beaker-stage{grid-template-columns:105px 1fr;gap:12px;padding:10px}.lab-controls{gap:7px}}
+
+.lab-action-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;flex-wrap:wrap}
+.molecule-stage{perspective:700px}
+.molecule-stage svg{transform-style:preserve-3d;transition:transform .35s}
+.molecule-stage.rotating svg{animation:moleculeOrbit 5s linear infinite}
+@keyframes moleculeOrbit{0%{transform:rotateY(0deg) rotateX(0deg)}50%{transform:rotateY(180deg) rotateX(12deg)}100%{transform:rotateY(360deg) rotateX(0deg)}}
+.shell-stage{height:230px;display:grid;place-items:center;background:radial-gradient(ellipse,#183342,#0b151d 70%);border:1px solid var(--line);border-radius:15px;margin-top:12px;overflow:hidden}
+.shell-stage svg{width:100%;height:100%;max-width:340px}
+.beaker.animating .beaker-liquid:before,.beaker.animating .beaker-liquid:after{content:"";position:absolute;bottom:8px;width:9px;height:9px;border-radius:50%;background:#e9fbffcc;animation:labBubble 1.3s ease-in infinite}
+.beaker.animating .beaker-liquid:after{left:65%;animation-delay:.55s;width:6px;height:6px}
+@keyframes labBubble{0%{transform:translateY(0) scale(.5);opacity:0}25%{opacity:.9}100%{transform:translateY(-100px) scale(1.2);opacity:0}}
 </style></head><body><div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">W</div><div><b>webchem<span style="color:var(--mint)">.</span></b><small>the chemistry lab</small></div></div><div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-view="home"><span class="ico">⌂</span>Overview</button><button data-view="learn"><span class="ico">▤</span>Learn</button><button data-view="lab"><span class="ico">⚗</span>Virtual lab</button><button data-view="tools"><span class="ico">⌘</span>Calculators</button><button data-view="quiz"><span class="ico">✳</span>Quiz zone</button><button data-view="progress"><span class="ico">◴</span>My progress</button><button data-view="tutor"><span class="ico">🤖</span>AI Tutor</button></nav></div><div class="sidebottom"><span style="font-size:22px">✦</span><strong>Curiosity looks good on you.</strong><p>Small lessons. Big reactions. Keep exploring.</p><button class="btn small" onclick="navigate('learn')">Explore lessons ↗</button></div></aside><main class="main"><header class="topbar"><div class="crumb">Workspace <span style="color:#50636e">/</span> <b id="crumb">Overview</b></div><div class="topactions"><label class="search"><span>⌕</span><input id="globalSearch" placeholder="Search chemistry…" aria-label="Search chemistry"></label><span id="authStatus" class="authstatus">Guest mode</span><button id="authOpenBtn" class="authbtn primary" onclick="openAuth('login')">Sign in</button><button id="authLogoutBtn" class="authbtn" onclick="logout()" style="display:none">Log out</button><button class="avatar" title="Learner profile" onclick="navigate('progress')">S</button></div></header>
 <section class="view active" id="view-home"><div class="hero"><div class="heroMain"><div class="eyebrow">YOUR PERSONAL CHEMISTRY SPACE</div><h1>Make chemistry<br>make sense.</h1><p>Explore the ideas behind every reaction. Learn at your pace, experiment safely, and turn curiosity into understanding.</p><button class="btn primary" onclick="navigate('learn')">Continue exploring <span>↗</span></button></div><div class="heroStats"><div class="statcard"><div><div class="label">Lessons explored</div><strong id="statLessons">0</strong></div><div class="staticon">▤</div></div><div class="statcard"><div><div class="label">Quiz points</div><strong id="statPoints">0</strong></div><div class="staticon" style="background:#302b20;color:var(--yellow)">✳</div></div><div class="statcard"><div><div class="label">Day streak</div><strong id="statStreak">0 days</strong></div><div class="staticon" style="background:#322431;color:var(--pink)">♨</div></div></div></div>
 <div class="sectionhead"><div><h2>Pick your next experiment</h2><p>Purpose-built spaces for learning, practising and discovering.</p></div><div class="chips"><button class="chip active" data-filter="all">All spaces</button><button class="chip" data-filter="study">Study</button><button class="chip" data-filter="practice">Practice</button></div></div><div class="grid" id="featureGrid"><article class="feature" data-category="study" onclick="navigate('learn')"><div class="featuretop"><div class="featureicon">📚</div><span class="arrow">↗</span></div><h3>Learning library</h3><p>Concept-first lessons from atoms to analytical chemistry.</p><span class="tag">GUIDED LEARNING</span></article><article class="feature" data-category="practice" onclick="navigate('lab')"><div class="featuretop"><div class="featureicon">⚗️</div><span class="arrow">↗</span></div><h3>Reaction explorer</h3><p>Explore balanced equations, reaction types and observations.</p><span class="tag">INTERACTIVE REFERENCE</span></article><article class="feature" data-category="practice" onclick="navigate('tools')"><div class="featuretop"><div class="featureicon">∑</div><span class="arrow">↗</span></div><h3>Scientific calculators</h3><p>Molar mass, molarity, dilution, pH and more.</p><span class="tag">INSTANT RESULTS</span></article><article class="feature" data-category="practice" onclick="navigate('quiz')"><div class="featuretop"><div class="featureicon">✳</div><span class="arrow">↗</span></div><h3>Quiz zone</h3><p>Test your understanding with quick chemistry challenges.</p><span class="tag">EARN POINTS</span></article><article class="feature" data-category="study" onclick="navigate('progress')"><div class="featuretop"><div class="featureicon">◴</div><span class="arrow">↗</span></div><h3>Your learning journey</h3><p>See completed lessons, quiz scores and earned badges.</p><span class="tag">PERSONAL PROGRESS</span></article><article class="feature" data-category="study" onclick="openModal('Periodic table','Explore selected elements and their atomic properties.')"><div class="featuretop"><div class="featureicon">▦</div><span class="arrow">↗</span></div><h3>Element quick guide</h3><p>Search common elements by symbol, number or name.</p><span class="tag">REFERENCE DESK</span></article></div>
@@ -178,7 +189,15 @@
   <p class="muted">Choose a molecule to inspect a schematic ball-and-stick structure and its basic geometry.</p>
   <div class="field"><label for="moleculeChoice">Select molecule</label><select id="moleculeChoice"><option value="water">Water · H₂O</option><option value="co2">Carbon dioxide · CO₂</option><option value="ammonia">Ammonia · NH₃</option><option value="methane">Methane · CH₄</option></select></div>
   <div class="molecule-stage" id="moleculeStage" aria-live="polite"></div>
+  <div class="lab-action-row"><button class="btn small" id="moleculeRotate">▶ Rotate model</button><span class="muted" style="font-size:11px">Schematic 3D-style view · drag not required</span></div>
   <div class="result" id="moleculeInfo"></div>
+ </article>
+ <article class="panel lab-sim">
+  <div class="eyebrow">SIMULATION 03 · ATOMIC STRUCTURE</div><h3>Electron-shell explorer</h3>
+  <p class="muted">Select an element to see its simplified Bohr shell distribution.</p>
+  <div class="field"><label for="shellChoice">Element</label><select id="shellChoice"><option value="H">Hydrogen · H</option><option value="C">Carbon · C</option><option value="N">Nitrogen · N</option><option value="O">Oxygen · O</option><option value="Na">Sodium · Na</option><option value="Mg">Magnesium · Mg</option><option value="Al">Aluminium · Al</option><option value="Cl">Chlorine · Cl</option><option value="Ca">Calcium · Ca</option></select></div>
+  <div class="shell-stage" id="shellStage" aria-live="polite"></div>
+  <div class="result" id="shellInfo"></div>
  </article>
 </div>
 <p class="muted" style="font-size:12px">These are educational simulations, not validated laboratory procedures. Do not use them as instructions for handling chemicals. Real laboratory work requires trained supervision, PPE and approved protocols.</p></section>
@@ -383,6 +402,30 @@ function renderMolecule(){
  document.getElementById('moleculeStage').innerHTML='<svg viewBox="0 0 360 230" role="img" aria-label="'+model.name+' ball and stick model">'+bonds+atoms+'</svg>';
  document.getElementById('moleculeInfo').innerHTML='<strong>'+model.name+'</strong><p>Geometry: '+model.shape+' · Bond angle: '+model.angle+'</p><p>'+model.note+'</p>';
 }
+
+const shellElements={
+ H:{name:'Hydrogen',z:1,shells:[1],config:'1s¹',valence:1},
+ C:{name:'Carbon',z:6,shells:[2,4],config:'1s² 2s² 2p²',valence:4},
+ N:{name:'Nitrogen',z:7,shells:[2,5],config:'1s² 2s² 2p³',valence:5},
+ O:{name:'Oxygen',z:8,shells:[2,6],config:'1s² 2s² 2p⁴',valence:6},
+ Na:{name:'Sodium',z:11,shells:[2,8,1],config:'1s² 2s² 2p⁶ 3s¹',valence:1},
+ Mg:{name:'Magnesium',z:12,shells:[2,8,2],config:'1s² 2s² 2p⁶ 3s²',valence:2},
+ Al:{name:'Aluminium',z:13,shells:[2,8,3],config:'1s² 2s² 2p⁶ 3s² 3p¹',valence:3},
+ Cl:{name:'Chlorine',z:17,shells:[2,8,7],config:'1s² 2s² 2p⁶ 3s² 3p⁵',valence:7},
+ Ca:{name:'Calcium',z:20,shells:[2,8,8,2],config:'1s² 2s² 2p⁶ 3s² 3p⁶ 4s²',valence:2}
+};
+function renderShell(){
+ const key=document.getElementById('shellChoice').value,e=shellElements[key],cx=170,cy=112;
+ let svg='<svg viewBox="0 0 340 230" role="img" aria-label="'+e.name+' Bohr electron shell diagram"><circle cx="'+cx+'" cy="'+cy+'" r="20" fill="#536b91" stroke="#dce9ff" stroke-width="2"/><text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" fill="white" font-size="13" font-weight="800">'+key+'</text>';
+ const colors=['#79e8c5','#70baff','#ffc56c','#ff8ba5'];
+ e.shells.forEach((count,idx)=>{const radius=38+idx*27;svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+radius+'" fill="none" stroke="#8da8b8" stroke-opacity=".55" stroke-width="1.5"/>';for(let j=0;j<count;j++){const a=(-Math.PI/2)+(2*Math.PI*j/count)+(idx*.18),x=cx+radius*Math.cos(a),y=cy+radius*Math.sin(a);svg+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="5.5" fill="'+colors[idx%colors.length]+'" stroke="#07121a" stroke-width="1"/>'}});
+ svg+='</svg>';document.getElementById('shellStage').innerHTML=svg;
+ document.getElementById('shellInfo').innerHTML='<strong>'+e.name+' · Atomic number '+e.z+'</strong><p>Shell distribution: '+e.shells.join(' · ')+'</p><p>Electron configuration: '+e.config+'</p><p>Electrons in outer shell: '+e.valence+'</p><small class="muted">Simplified Bohr representation; not to scale and not an orbital probability model.</small>';
+}
+document.getElementById('shellChoice').addEventListener('change',renderShell);
+document.getElementById('moleculeRotate').addEventListener('click',()=>{const stage=document.getElementById('moleculeStage'),btn=document.getElementById('moleculeRotate');const active=stage.classList.toggle('rotating');btn.textContent=active?'Ⅱ Stop rotation':'▶ Rotate model'});
+document.getElementById('runNeutralization').addEventListener('click',()=>{const beaker=document.getElementById('labBeaker');beaker.classList.remove('animating');void beaker.offsetWidth;beaker.classList.add('animating');setTimeout(()=>beaker.classList.remove('animating'),3500)});
+renderShell();
 document.getElementById('runNeutralization').addEventListener('click',runNeutralization);
 document.getElementById('moleculeChoice').addEventListener('change',renderMolecule);
 runNeutralization();renderMolecule();
