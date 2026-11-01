@@ -930,49 +930,62 @@ const oldAuth=window.authStatus;if(typeof oldAuth==='function'){window.authStatu
 window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons();window.renderWebChemProfile();
 })();
 
-/* Focus Music player: persistent across WebChem views with YouTube playback state */
+/* Focus Music player: YouTube iframe playback with real playback-state indicator */
 (function(){
  const dock=document.createElement('aside');dock.className='focus-player-dock';dock.id='focusPlayerDock';dock.setAttribute('aria-label','Focus music player');
- dock.innerHTML='<div class="focus-dock-head"><div class="focus-dock-brand"><span class="focus-neon-disc" id="focusNeonDisc" aria-label="Music paused">♫</span><div><strong>LOFI GIRL · FOCUS RADIO</strong><div class="focus-eq" id="focusEqualizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div></div><div class="focus-dock-actions"><button type="button" id="focusDockStop" class="stop" aria-label="Stop music">Stop ■</button><button type="button" id="focusDockClose" aria-label="Hide music player">Hide −</button></div></div><div id="focusYoutubeHost"><iframe id="focusYoutubeFrame" title="Lofi Girl lofi hip hop radio" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>';
+ const iframeMarkup='<iframe id="focusYoutubeFrame" title="Lofi Girl lofi hip hop radio" width="100%" height="200" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>';
+ dock.innerHTML='<div class="focus-dock-head"><div class="focus-dock-brand"><span class="focus-neon-disc" id="focusNeonDisc" aria-label="Music paused">♫</span><div><strong>LOFI GIRL · FOCUS RADIO</strong><div class="focus-eq" id="focusEqualizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div></div><div class="focus-dock-actions"><button type="button" id="focusDockStop" class="stop" aria-label="Stop music">Stop ■</button><button type="button" id="focusDockClose" aria-label="Hide music player">Hide −</button></div></div><div id="focusYoutubeHost">'+iframeMarkup+'</div>';
  document.body.appendChild(dock);
  const mini=document.createElement('button');mini.type='button';mini.className='focus-mini-trigger';mini.id='focusMiniTrigger';mini.innerHTML='<span class="focus-neon-disc" id="focusMiniDisc">♫</span><span class="focus-eq" id="focusMiniEq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>';mini.setAttribute('aria-label','Show focus music player');mini.title='Show focus music player';document.body.appendChild(mini);
- let player=null,apiLoading=false,ready=false,playing=false;
+ let player=null,apiLoading=false,apiReady=false,playing=false,sessionStarted=false;
  const frame=()=>document.getElementById('focusYoutubeFrame');
  function setPlaying(value){
-   playing=!!value;
-   ['focusNeonDisc','focusMiniDisc'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.toggle('playing',playing);el.setAttribute('aria-label',playing?'Music playing':'Music paused')}});
-   ['focusEqualizer','focusMiniEq'].forEach(id=>document.getElementById(id)?.classList.toggle('playing',playing));
-   mini.classList.toggle('is-playing',playing);
+  playing=!!value;
+  ['focusNeonDisc','focusMiniDisc'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.toggle('playing',playing);el.setAttribute('aria-label',playing?'Music playing':'Music paused')}});
+  ['focusEqualizer','focusMiniEq'].forEach(id=>document.getElementById(id)?.classList.toggle('playing',playing));
  }
- function loadYouTubeApi(){
-   if(window.YT&&window.YT.Player){createPlayer();return}
-   if(apiLoading)return;apiLoading=true;
-   const previous=window.onYouTubeIframeAPIReady;
-   window.onYouTubeIframeAPIReady=function(){if(typeof previous==='function')previous();createPlayer()};
-   if(!document.querySelector('script[data-webchem-youtube-api]')){const tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';tag.async=true;tag.dataset.webchemYoutubeApi='1';document.head.appendChild(tag)}
+ function showError(message){if(typeof toast==='function')toast(message)}
+ function onPlayerState(event){
+  if(!window.YT||!YT.PlayerState)return;
+  setPlaying(event.data===YT.PlayerState.PLAYING);
+  if(event.data===YT.PlayerState.ENDED)setPlaying(false);
  }
- function createPlayer(){
-   if(player||!window.YT||!window.YT.Player||!frame())return;
-   player=new YT.Player('focusYoutubeFrame',{events:{onReady:function(){ready=true},onStateChange:function(e){setPlaying(e.data===1);if(e.data===0)setPlaying(false)},onError:function(){setPlaying(false)}}});
+ function attachPlayer(){
+  if(player||!apiReady||!frame()||!frame().src)return;
+  try{
+   player=new YT.Player('focusYoutubeFrame',{events:{
+    onReady:function(event){if(sessionStarted){try{event.target.playVideo()}catch(e){}}},
+    onStateChange:onPlayerState,
+    onError:function(event){setPlaying(false);showError('YouTube could not play this stream (error '+event.data+'). Try again or open it on YouTube.')},
+    onAutoplayBlocked:function(){showError('Browser blocked autoplay. Tap Play inside the YouTube player.')}
+   }});
+  }catch(e){console.warn('WebChem YouTube player API:',e);showError('YouTube player could not initialize. Please reload WebChem.')}
+ }
+ function loadApi(){
+  if(window.YT&&window.YT.Player){apiReady=true;attachPlayer();return}
+  if(apiLoading)return;
+  apiLoading=true;
+  const old=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=function(){if(typeof old==='function')old();apiReady=true;attachPlayer()};
+  if(!document.querySelector('script[data-webchem-youtube-api]')){const tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';tag.async=true;tag.dataset.webchemYoutubeApi='1';tag.onerror=function(){showError('YouTube player API failed to load. Check your connection or content blocker.')};document.head.appendChild(tag)}
  }
  function startFocusMusic(){
-   dock.classList.add('open');mini.classList.remove('visible');
-   if(!frame().src){frame().src='https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?enablejsapi=1&playsinline=1&rel=0&origin='+encodeURIComponent(location.origin)}
-   loadYouTubeApi();
-   const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Radio player opened ✓';
-   if(typeof toast==='function')toast('Focus radio is ready — press play in the YouTube player.');
+  dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;
+  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
+  loadApi();
+  const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Radio player opened ✓';
+  showError('Loading Lofi Girl radio… If playback does not start, tap Play in the player.');
  }
  function minimizeFocusMusic(){if(!frame().src)return;dock.classList.remove('open');mini.classList.add('visible')}
  function stopFocusMusic(){
-   if(player&&ready){try{player.stopVideo()}catch(e){}}
-   setPlaying(false);dock.classList.remove('open');mini.classList.remove('visible');
-   if(player){try{player.destroy()}catch(e){}player=null;ready=false}
-   const host=document.getElementById('focusYoutubeHost');if(host)host.innerHTML='<iframe id="focusYoutubeFrame" title="Lofi Girl lofi hip hop radio" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
-   const btn=document.getElementById('focusStartBtn');if(btn)btn.innerHTML='Start lofi radio <span>▶</span>';
-   if(typeof toast==='function')toast('Focus music stopped.');
+  sessionStarted=false;setPlaying(false);dock.classList.remove('open');mini.classList.remove('visible');
+  if(player){try{player.destroy()}catch(e){}player=null}
+  const host=document.getElementById('focusYoutubeHost');if(host)host.innerHTML=iframeMarkup;
+  const btn=document.getElementById('focusStartBtn');if(btn)btn.innerHTML='Start lofi radio <span>▶</span>';
+  showError('Focus music stopped.');
  }
  document.getElementById('focusStartBtn')?.addEventListener('click',startFocusMusic);
- document.querySelectorAll('[data-focus-play="lofi"]').forEach(b=>b.addEventListener('click',startFocusMusic));
+ document.querySelectorAll('[data-focus-play="lofi"]').forEach(button=>button.addEventListener('click',startFocusMusic));
  dock.addEventListener('click',function(event){const target=event.target.closest('#focusDockClose,#focusDockStop');if(!target)return;event.preventDefault();event.stopPropagation();if(target.id==='focusDockClose')minimizeFocusMusic();else stopFocusMusic()});
  mini.addEventListener('click',function(){dock.classList.add('open');mini.classList.remove('visible');if(!frame().src)startFocusMusic()});
  window.webchemFocusMusic={open:startFocusMusic,minimize:minimizeFocusMusic,stop:stopFocusMusic};
