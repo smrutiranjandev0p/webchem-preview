@@ -974,7 +974,7 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
   try{if(audio){audio.pause();audio.currentTime=0}}catch(e){}
   dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;
   document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · LIVE RADIO';
-  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/live_stream?channel=UCSJ4gkVC6NrvII8umztf0Ow&autoplay=1&playsinline=1&rel=0&origin='+origin}
+  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/X4VbdwhkE10?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
   loadApi();
   const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Radio player opened ✓';
   showError('Loading Lofi Girl radio… If playback does not start, tap Play in the player.');
