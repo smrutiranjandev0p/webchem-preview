@@ -991,7 +991,8 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  function openPlaylist(){dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;player?.pauseVideo?.();setPlaying(false);document.getElementById('focusYoutubeTab').classList.remove('active');document.getElementById('focusPlaylistTab').classList.add('active');document.getElementById('focusYoutubeHost').hidden=true;document.getElementById('focusPlaylistHost').hidden=false;document.getElementById('focusDockTitle').textContent='WEBCHEM · FREE MUSIC';if(!audio.src)selectTrack(0,false)}
  document.getElementById('focusPlaylistTab')?.addEventListener('click',openPlaylist);
  document.getElementById('focusYoutubeTab')?.addEventListener('click',startFocusMusic);
- document.getElementById('focusTrackSelect')?.addEventListener('change',e=>selectTrack(Number(e.target.value)));\n document.getElementById('focusNextTrack')?.addEventListener('click',()=>selectTrack(trackIndex+1));
+ document.getElementById('focusTrackSelect')?.addEventListener('change',e=>selectTrack(Number(e.target.value)));
+ document.getElementById('focusNextTrack')?.addEventListener('click',()=>selectTrack(trackIndex+1));
  document.getElementById('focusPrevTrack')?.addEventListener('click',()=>selectTrack(trackIndex-1));
  audio?.addEventListener('play',()=>setPlaying(true));audio?.addEventListener('pause',()=>setPlaying(false));audio?.addEventListener('ended',()=>selectTrack(trackIndex+1));
  document.querySelectorAll('[data-focus-play="free"]').forEach(button=>button.addEventListener('click',openPlaylist));
