@@ -945,6 +945,7 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
   {title:'Cozy Café',mood:'Soft room murmur · study ambience',notes:[146.83,185,220,293.66],wave:'sine',filter:460,noise:'brown',noiseFilter:380,noiseGain:.17},
   {title:'Arctic Night',mood:'Airy cold wind · deep stillness',notes:[110,164.81,220,329.63],wave:'sine',filter:390,noise:'white',noiseFilter:780,noiseGain:.1},
   {title:'Gentle Rain',mood:'Steady rainfall · quiet concentration',notes:[207.65,261.63,311.13,415.3],wave:'sine',filter:610,noise:'white',noiseFilter:1250,noiseGain:.24}
+ ];
  const extraScenes=[
  ['Misty Mountains','Soft mountain air · slow focus',[130.81,164.81,196,246.94],'sine',440,'brown',.13],
  ['Waterfall Mist','Cascading water · refreshing calm',[146.83,185,220,277.18],'sine',980,'white',.18],
@@ -1071,7 +1072,8 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  document.getElementById('focusNextTrack')?.addEventListener('click',()=>selectTrack(trackIndex+1));
  document.getElementById('focusPrevTrack')?.addEventListener('click',()=>selectTrack(trackIndex-1));
  document.getElementById('focusSoundToggle')?.addEventListener('click',()=>{if(soundPlaying){audioContext?.suspend();soundPlaying=false;setPlaying(false);document.getElementById('focusSoundToggle').textContent='▶ Play';updateSessionTimer()}else startSoundscape()});
- document.getElementById('focusDuration')?.addEventListener('change',e=>{if(sessionEndAt){showError('Stop and restart to apply a new session length.')}else updateSessionTimer()});\n document.getElementById('focusVolume')?.addEventListener('input',e=>{if(masterGain)masterGain.gain.setTargetAtTime(Number(e.target.value)/100*.16,audioContext.currentTime,.08)});
+ document.getElementById('focusDuration')?.addEventListener('change',e=>{if(sessionEndAt){showError('Stop and restart to apply a new session length.')}else updateSessionTimer()});
+ document.getElementById('focusVolume')?.addEventListener('input',e=>{if(masterGain)masterGain.gain.setTargetAtTime(Number(e.target.value)/100*.16,audioContext.currentTime,.08)});
  document.querySelectorAll('[data-focus-play="free"]').forEach(button=>button.addEventListener('click',openPlaylist));
  document.getElementById('focusStartBtn')?.addEventListener('click',startFocusMusic);
  dock.addEventListener('click',function(event){const target=event.target.closest('#focusDockClose,#focusDockStop');if(!target)return;event.preventDefault();event.stopPropagation();if(target.id==='focusDockClose')minimizeFocusMusic();else stopFocusMusic()});
