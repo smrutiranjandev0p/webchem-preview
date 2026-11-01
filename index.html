@@ -342,7 +342,7 @@ const webChemAIHistory={tutor:[],firebot:[]};
 async function askWebChemAI(mode,message){
  const history=webChemAIHistory[mode]||[];
  const next=[...history,{role:'user',content:message}].slice(-10);
- const response=await fetch(API+'/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,messages:next})});
+ const response=await fetch(API+'/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({mode,messages:next})});
  let data={};try{data=await response.json()}catch{}
  if(!response.ok||!data.success)throw new Error(data.error||'AI request failed. Please try again.');
  webChemAIHistory[mode]=[...next,{role:'assistant',content:data.answer}].slice(-10);
