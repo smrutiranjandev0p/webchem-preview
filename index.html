@@ -1010,7 +1010,13 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  }
  makeDraggable(dock,dock.querySelector('.focus-dock-head'));makeDraggable(mini,mini);
  window.addEventListener('resize',()=>{const r=(dock.classList.contains('open')?dock:mini).getBoundingClientRect();placePlayer(r.left,r.top)});
- let player=null,apiLoading=false,apiReady=false,playing=false,sessionStarted=false;
+ let player=null,apiLoading=false,apiReady=false,playing=false,sessionStarted=false,streamIndex=0,streamTimer=null,streamFallbackBusy=false;
+ const radioStreams=[
+  {id:'rFZHOHl-L8A',title:'LOFI GIRL · LIVE RADIO'},
+  {id:'hHW1oY26kxQ',title:'LOFI GIRL · STUDY RADIO'},
+  {id:'28KRPhVzCus',title:'LOFI GIRL · SLEEP RADIO'},
+  {id:'1oDrJba2PSs',title:'LOFI GIRL · STUDY WITH ME'}
+ ];
  const frame=()=>document.getElementById('focusYoutubeFrame');
  function setPlaying(value){
   playing=!!value;
@@ -1018,19 +1024,44 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
   ['focusEqualizer','focusMiniEq'].forEach(id=>document.getElementById(id)?.classList.toggle('playing',playing));
  }
  function showError(message){if(typeof toast==='function')toast(message)}
+ function clearStreamTimer(){if(streamTimer){clearTimeout(streamTimer);streamTimer=null}}
+ function armStreamTimer(){clearStreamTimer();streamTimer=setTimeout(()=>{if(sessionStarted&&!playing)tryNextStream('This stream did not start')},18000)}
+ function tryNextStream(reason){
+  if(!sessionStarted||streamFallbackBusy)return;
+  clearStreamTimer();
+  streamFallbackBusy=true;
+  setPlaying(false);
+  if(player){try{player.stopVideo();player.destroy()}catch(e){}player=null}
+  streamIndex++;
+  if(streamIndex>=radioStreams.length){
+   streamFallbackBusy=false;
+   showError('All available Lofi Girl streams are unavailable right now. Please try again later.');
+   return;
+  }
+  const stream=radioStreams[streamIndex],host=document.getElementById('focusYoutubeHost');
+  if(!host){streamFallbackBusy=false;return}
+  document.getElementById('focusDockTitle').textContent=stream.title;
+  host.innerHTML=iframeMarkup;
+  const origin=encodeURIComponent(location.origin);
+  frame().src='https://www.youtube.com/embed/'+stream.id+'?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin;
+  showError(reason+' · trying another Lofi Girl station ('+streamIndex+'/'+(radioStreams.length-1)+')…');
+  streamFallbackBusy=false;
+  if(apiReady)attachPlayer();else loadApi();
+ }
  function onPlayerState(event){
   if(!window.YT||!YT.PlayerState)return;
-  setPlaying(event.data===YT.PlayerState.PLAYING);
-  if(event.data===YT.PlayerState.ENDED)setPlaying(false);
+  if(event.data===YT.PlayerState.PLAYING){clearStreamTimer();setPlaying(true)}
+  else {setPlaying(false);if(event.data===YT.PlayerState.BUFFERING)armStreamTimer()}
+  if(event.data===YT.PlayerState.ENDED)tryNextStream('This broadcast has ended');
  }
  function attachPlayer(){
   if(player||!apiReady||!frame()||!frame().src)return;
   try{
    player=new YT.Player('focusYoutubeFrame',{events:{
-    onReady:function(event){if(sessionStarted){try{event.target.playVideo()}catch(e){}}},
+    onReady:function(event){if(sessionStarted){armStreamTimer();try{event.target.playVideo()}catch(e){}}},
     onStateChange:onPlayerState,
-    onError:function(event){setPlaying(false);showError('YouTube could not play this stream (error '+event.data+'). Try again or open it on YouTube.')},
-    onAutoplayBlocked:function(){showError('Browser blocked autoplay. Tap Play inside the YouTube player.')}
+    onError:function(event){tryNextStream('YouTube error '+event.data)},
+    onAutoplayBlocked:function(){clearStreamTimer();showError('Browser blocked autoplay. Tap Play inside the YouTube player.')}
    }});
   }catch(e){console.warn('WebChem YouTube player API:',e);showError('YouTube player could not initialize. Please reload WebChem.')}
  }
@@ -1044,16 +1075,20 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  }
  function startFocusMusic(){
   stopSoundscape();
+  clearStreamTimer();streamIndex=0;streamFallbackBusy=false;
   dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;
-  document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · LIVE RADIO';
-  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/rFZHOHl-L8A?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
+  document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent=radioStreams[0].title;
+  if(player){try{player.destroy()}catch(e){}player=null}
+  const origin=encodeURIComponent(location.origin);
+  document.getElementById('focusYoutubeHost').innerHTML=iframeMarkup;
+  frame().src='https://www.youtube.com/embed/'+radioStreams[0].id+'?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin;
   loadApi();
   const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Live radio opened ✓';
-  showError('Connecting to Lofi Girl live radio… If playback does not start, tap Play in the player.');
+  showError('Connecting to Lofi Girl live radio… If one station is unavailable, WebChem will try another automatically.');
  }
  function minimizeFocusMusic(){if(!dock.classList.contains('open'))return;dock.classList.remove('open');mini.classList.add('visible')}
  function stopFocusMusic(){
-  sessionStarted=false;
+  sessionStarted=false;clearStreamTimer();streamFallbackBusy=false;
   // Stop both possible sources; destroying the iframe alone does not reliably stop its audio session.
   stopSoundscape();
   if(player){try{player.stopVideo();player.pauseVideo();player.destroy()}catch(e){}player=null}
