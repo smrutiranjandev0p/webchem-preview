@@ -664,6 +664,7 @@ function authStatus(user){
  if(avatar&&initials){const name=String((user&&(user.name||user.fullName||user.full_name||user.username||user.email))||'Guest learner');initials.textContent=learnerInitials(user);avatar.title=name+' · Learner profile';avatar.setAttribute('aria-label',name+' profile');}
  if(user){status.textContent=user.username||user.email||'Signed in';open.style.display='none';out.style.display='inline-block';probeKnowledgeAdmin()}
  else{status.textContent='Guest mode';open.style.display='inline-block';out.style.display='none';const kn=document.getElementById('knowledgeAdminNav');if(kn)kn.style.display='none'}
+ if(window.webchemRefreshProfilePhoto)window.webchemRefreshProfilePhoto();
 }
 function togglePassword(inputId,button){const input=document.getElementById(inputId);if(!input)return;const reveal=input.type==='password';input.type=reveal?'text':'password';button.textContent=reveal?'🙈':'👁️';button.setAttribute('aria-label',reveal?'Hide password':'Show password');button.setAttribute('aria-pressed',String(reveal));}
 
@@ -858,8 +859,9 @@ document.getElementById('knowledgeResearch')?.addEventListener('click',async()=>
 <script>(function(){
 const input=document.getElementById('profilePhotoInput'),avatar=document.getElementById('learnerAvatar'),photo=document.getElementById('avatarPhoto'),initials=document.getElementById('avatarInitials');
 if(!input||!avatar||!photo||!initials)return;
-function photoKey(){const u=window.currentUser||null;const id=u?(u._id||u.id||u.email||u.username||'account'):'guest';return 'webchem-profile-photo-'+String(id).toLowerCase().replace(/[^a-z0-9_-]/g,'_')}
+function photoKey(){const u=(typeof currentUser!=='undefined'?currentUser:null);const id=u?(u._id||u.id||u.email||u.username||'account'):'guest';return 'webchem-profile-photo-'+String(id).toLowerCase().replace(/[^a-z0-9_-]/g,'_')}
 function applyPhoto(data){if(data){photo.src=data;photo.hidden=false;avatar.classList.add('has-photo')}else{photo.removeAttribute('src');photo.hidden=true;avatar.classList.remove('has-photo')}}
+window.webchemRefreshProfilePhoto=function(){try{applyPhoto(localStorage.getItem(photoKey()))}catch(e){applyPhoto(null)}};
 try{applyPhoto(localStorage.getItem(photoKey()))}catch(e){}
 input.addEventListener('change',function(){const file=input.files&&input.files[0];if(!file)return;const allowed=['image/jpeg','image/png','image/webp'];if(!allowed.includes(file.type)){toast('Choose a JPG, PNG or WebP image.');input.value='';return}if(file.size>8388608){toast('Please choose an image smaller than 8 MB.');input.value='';return}const reader=new FileReader();reader.onload=function(){const img=new Image();img.onload=function(){const canvas=document.createElement('canvas'),size=320;canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');const scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const data=canvas.toDataURL('image/jpeg',0.84);try{localStorage.setItem(photoKey(),data);applyPhoto(data);toast('Profile photo updated!')}catch(e){toast('Photo could not be saved. Try a smaller image.')}};img.onerror=function(){toast('Could not read that image.')} ;img.src=reader.result};reader.onerror=function(){toast('Could not load that image.')} ;reader.readAsDataURL(file);input.value=''});
 })();</script></body></html>
