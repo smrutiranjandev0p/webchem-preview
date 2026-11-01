@@ -971,6 +971,7 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
   if(!document.querySelector('script[data-webchem-youtube-api]')){const tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';tag.async=true;tag.dataset.webchemYoutubeApi='1';tag.onerror=function(){showError('YouTube player API failed to load. Check your connection or content blocker.')};document.head.appendChild(tag)}
  }
  function startFocusMusic(){
+  try{if(audio){audio.pause();audio.currentTime=0}}catch(e){}
   dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;
   document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · LIVE RADIO';
   if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/live_stream?channel=UCSJ4gkVC6NrvII8umztf0Ow&autoplay=1&playsinline=1&rel=0&origin='+origin}
@@ -980,9 +981,14 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  }
  function minimizeFocusMusic(){if(!frame().src)return;dock.classList.remove('open');mini.classList.add('visible')}
  function stopFocusMusic(){
-  sessionStarted=false;setPlaying(false);dock.classList.remove('open');mini.classList.remove('visible');
-  if(player){try{player.destroy()}catch(e){}player=null}
-  const host=document.getElementById('focusYoutubeHost');if(host)host.innerHTML=iframeMarkup;
+  sessionStarted=false;
+  // Stop both possible sources; destroying the iframe alone does not reliably stop its audio session.
+  try{if(audio){audio.pause();audio.removeAttribute('src');audio.load()}}catch(e){}
+  if(player){try{player.stopVideo();player.pauseVideo();player.destroy()}catch(e){}player=null}
+  const host=document.getElementById('focusYoutubeHost');
+  if(host){host.innerHTML='';host.innerHTML=iframeMarkup}
+  setPlaying(false);dock.classList.remove('open');mini.classList.remove('visible');
+  try{if('mediaSession' in navigator){navigator.mediaSession.playbackState='paused';navigator.mediaSession.metadata=null}}catch(e){}
   const btn=document.getElementById('focusStartBtn');if(btn)btn.innerHTML='Start lofi radio <span>▶</span>';
   showError('Focus music stopped.');
  }
