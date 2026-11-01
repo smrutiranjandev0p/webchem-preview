@@ -936,7 +936,7 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
 /* Focus Music player: YouTube iframe playback with real playback-state indicator */
 (function(){
  const dock=document.createElement('aside');dock.className='focus-player-dock';dock.id='focusPlayerDock';dock.setAttribute('aria-label','Focus music player');
- const iframeMarkup='<iframe id="focusYoutubeFrame" title="Lofi Girl study mix" width="100%" height="200" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>';
+ const iframeMarkup='<iframe id="focusYoutubeFrame" title="Lofi Girl live radio" width="100%" height="200" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>';
  const playlist=[
   {title:'Midnight Study',mood:'Warm ambient piano',notes:[261.63,329.63,392,493.88]},
   {title:'Rainy Window',mood:'Gentle rain · deep focus',notes:[220,261.63,329.63,392]},
@@ -1045,11 +1045,11 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  function startFocusMusic(){
   stopSoundscape();
   dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;
-  document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · STUDY MIX';
-  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/hHW1oY26kxQ?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
+  document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · LIVE RADIO';
+  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/rFZHOHl-L8A?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
   loadApi();
-  const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Study mix opened ✓';
-  showError('Loading Lofi Girl study mix… If playback does not start, tap Play in the player.');
+  const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Live radio opened ✓';
+  showError('Connecting to Lofi Girl live radio… If playback does not start, tap Play in the player.');
  }
  function minimizeFocusMusic(){if(!dock.classList.contains('open'))return;dock.classList.remove('open');mini.classList.add('visible')}
  function stopFocusMusic(){
