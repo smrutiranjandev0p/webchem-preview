@@ -436,7 +436,7 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
 <footer>WebChem 2.0 · Tutor prototype · No production systems changed</footer>
 </div></section><section class="view" id="view-focus">
 <div class="viewhead"><div><div class="eyebrow">WEBCHEM FOCUS STUDIO</div><h1>Find your focus.</h1><p>Settle in with a study soundtrack while you learn, practise and explore.</p></div><span class="focus-live-pill"><i></i> LISTEN WHEN YOU'RE READY</span></div>
-<div class="focus-hero panel"><div class="focus-hero-copy"><div class="eyebrow">YOUR STUDY COMPANION</div><h2>A little calm.<br>A lot of chemistry.</h2><p>Play your study soundtrack directly inside WebChem. Choose an original browser-generated soundscape or try the embedded radio player.</p><button class="btn primary" id="focusStartBtn" type="button">Start lofi radio <span>▶</span></button><small>Embedded radio player · playback may depend on video availability</small></div><div class="focus-art" aria-hidden="true"><div class="focus-orbit"></div><div class="focus-art-moon">☾</div><div class="focus-art-stars">✦　·　✧</div><div class="focus-art-book">♫</div></div></div>
+<div class="focus-hero panel"><div class="focus-hero-copy"><div class="eyebrow">YOUR STUDY COMPANION</div><h2>A little calm.<br>A lot of chemistry.</h2><p>Play your study soundtrack directly inside WebChem. Choose an original browser-generated soundscape or try the embedded radio player.</p><button class="btn primary" id="focusStartBtn" type="button">Start lofi mix <span>▶</span></button><small>YouTube study mix · availability depends on the original video</small></div><div class="focus-art" aria-hidden="true"><div class="focus-orbit"></div><div class="focus-art-moon">☾</div><div class="focus-art-stars">✦　·　✧</div><div class="focus-art-book">♫</div></div></div>
 <div class="sectionhead"><div><h2>Your study music</h2><p>Original ambient audio is generated locally in your browser. Playback controls stay inside WebChem.</p></div></div>
 <div class="focus-stations">
 <article class="focus-station focus-featured"><div class="focus-station-icon">♫</div><div class="focus-station-copy"><span class="focus-tag">BUILT-IN · 6 SOUNDSCAPES</span><h3>Focus soundscapes</h3><p>Choose from six original ambient soundscapes. No audio downloads required.</p><button class="btn small primary" type="button" data-focus-play="free">Open music player ▶</button></div></article>
@@ -931,7 +931,7 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
 /* Focus Music player: YouTube iframe playback with real playback-state indicator */
 (function(){
  const dock=document.createElement('aside');dock.className='focus-player-dock';dock.id='focusPlayerDock';dock.setAttribute('aria-label','Focus music player');
- const iframeMarkup='<iframe id="focusYoutubeFrame" title="Lofi Girl live radio" width="100%" height="200" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>';
+ const iframeMarkup='<iframe id="focusYoutubeFrame" title="Lofi Girl study mix" width="100%" height="200" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>';
  const playlist=[
   {title:'Midnight Study',mood:'Warm ambient piano',notes:[261.63,329.63,392,493.88]},
   {title:'Rainy Window',mood:'Gentle rain · deep focus',notes:[220,261.63,329.63,392]},
@@ -992,11 +992,11 @@ window.addEventListener('storage',window.renderWebChemProfile);syncThemeButtons(
  function startFocusMusic(){
   stopSoundscape();
   dock.classList.add('open');mini.classList.remove('visible');sessionStarted=true;
-  document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · LIVE RADIO';
-  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/X4VbdwhkE10?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
+  document.getElementById('focusYoutubeTab')?.classList.add('active');document.getElementById('focusPlaylistTab')?.classList.remove('active');document.getElementById('focusYoutubeHost').hidden=false;document.getElementById('focusPlaylistHost').hidden=true;document.getElementById('focusDockTitle').textContent='LOFI GIRL · STUDY MIX';
+  if(!frame().src){const origin=encodeURIComponent(location.origin);frame().src='https://www.youtube.com/embed/hHW1oY26kxQ?autoplay=1&enablejsapi=1&playsinline=1&rel=0&origin='+origin}
   loadApi();
-  const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Radio player opened ✓';
-  showError('Loading Lofi Girl radio… If playback does not start, tap Play in the player.');
+  const btn=document.getElementById('focusStartBtn');if(btn)btn.textContent='Study mix opened ✓';
+  showError('Loading Lofi Girl study mix… If playback does not start, tap Play in the player.');
  }
  function minimizeFocusMusic(){if(!dock.classList.contains('open'))return;dock.classList.remove('open');mini.classList.add('visible')}
  function stopFocusMusic(){
