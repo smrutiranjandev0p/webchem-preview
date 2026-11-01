@@ -930,7 +930,7 @@ const oldAuth=window.authStatus;if(typeof oldAuth==='function'){window.authStatu
 window.addEvent/* Focus Music player: persistent across WebChem views; minimize keeps playback alive */
 (function(){
  const dock=document.createElement('aside');dock.className='focus-player-dock';dock.id='focusPlayerDock';dock.setAttribute('aria-label','Focus music player');
- dock.innerHTML='<div class="focus-dock-head"><strong>♫ Lofi Girl · Focus radio</strong><div class="focus-dock-actions"><button type="button" id="focusDockStop" class="stop" aria-label="Stop music">Stop ■</button><button type="button" id="focusDockClose" aria-label="Minimize music player">Minimize −</button></div></div><iframe id="focusYoutubeFrame" title="Lofi Girl lofi hip hop radio" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+ dock.innerHTML='<div class="focus-dock-head"><strong>♫ Lofi Girl · Focus radio</strong><div class="focus-dock-actions"><button type="button" id="focusDockStop" class="stop" aria-label="Stop music">Stop ■</button><button type="button" id="focusDockClose" aria-label="Hide music player">Hide player −</button></div></div><iframe id="focusYoutubeFrame" title="Lofi Girl lofi hip hop radio" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
  document.body.appendChild(dock);
  const mini=document.createElement('button');mini.type='button';mini.className='focus-mini-trigger';mini.id='focusMiniTrigger';mini.textContent='♫ Focus music · Show player';mini.setAttribute('aria-label','Show focus music player');document.body.appendChild(mini);
  const frame=dock.querySelector('iframe');
@@ -951,8 +951,7 @@ window.addEvent/* Focus Music player: persistent across WebChem views; minimize 
  }
  document.getElementById('focusStartBtn')?.addEventListener('click',startFocusMusic);
  document.querySelectorAll('[data-focus-play="lofi"]').forEach(b=>b.addEventListener('click',startFocusMusic));
- document.getElementById('focusDockClose')?.addEventListener('click',minimizeFocusMusic);
- document.getElementById('focusDockStop')?.addEventListener('click',stopFocusMusic);
+ dock.addEventListener('click',function(event){const target=event.target.closest('#focusDockClose,#focusDockStop');if(!target)return;event.preventDefault();event.stopPropagation();if(target.id==='focusDockClose')minimizeFocusMusic();else stopFocusMusic()});
  mini.addEventListener('click',()=>{dock.classList.add('open');mini.classList.remove('visible');if(!frame.src)startFocusMusic()});
  window.webchemFocusMusic={open:startFocusMusic,minimize:minimizeFocusMusic,stop:stopFocusMusic};
 })();</script></body></html>
