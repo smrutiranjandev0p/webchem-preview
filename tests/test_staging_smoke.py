@@ -920,3 +920,70 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             assert csv_lines[1].split(",")[2] == "cbt", f"CSV should preserve CBT mode: {csv_lines[1]}"
         finally:
             browser.close()
+
+
+def test_chemistry_calculators_validate_inputs_and_allow_zero_amounts():
+    """Calculator regressions: zero solute/component is valid; blank/invalid values are rejected."""
+    errors = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.on("pageerror", lambda error: errors.append(str(error)))
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_selector("#authGate", timeout=15_000)
+            page.evaluate("""async () => {
+              await window.__WEBCHEM_TEST__.gateSuccess({
+                token:'calculator-smoke-token',user:{id:'calculator-smoke-user',username:'Calculator Smoke'}
+              });
+              navigate('tools');
+            }""")
+
+            # Molarity: zero moles is valid when the final volume is positive.
+            page.locator('[data-tool="molarity"]').click()
+            page.locator("#molAmount").fill("0")
+            page.locator("#molVolume").fill("500")
+            page.locator("button", has_text="Calculate molarity").click()
+            assert "0.000000 mol/L" in page.locator("#toolResult").inner_text()
+
+            # Blank values must not be silently interpreted as zero.
+            before = page.evaluate("window.__WEBCHEM_TEST__.state.calculations")
+            page.locator("#molAmount").fill("")
+            page.locator("button", has_text="Calculate molarity").click()
+            assert "Enter a number" in page.locator("#toast").inner_text()
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.calculations") == before
+
+            # Dilution: a zero target concentration correctly requires zero stock.
+            page.locator('[data-tool="dilution"]').click()
+            page.locator("#dC1").fill("2")
+            page.locator("#dC2").fill("0")
+            page.locator("#dV2").fill("250")
+            page.locator("button", has_text="Calculate stock volume").click()
+            assert "0.000 mL stock" in page.locator("#toolResult").inner_text()
+
+            # Mass percent: zero component mass is a valid 0% result.
+            page.locator('[data-tool="percent"]').click()
+            page.locator("#pctPart").fill("0")
+            page.locator("#pctTotal").fill("100")
+            page.locator("button", has_text="Calculate mass percent").click()
+            assert "0.000% by mass" in page.locator("#toolResult").inner_text()
+
+            # Formula parsing: standard nested formulas work; zero subscripts are rejected.
+            page.locator('[data-tool="molar"]').click()
+            page.locator("#formula").fill("Ca(OH)2")
+            page.locator("button", has_text="Calculate molar mass").click()
+            assert "74.0920 g/mol" in page.locator("#toolResult").inner_text()
+            before = page.evaluate("window.__WEBCHEM_TEST__.state.calculations")
+            page.locator("#formula").fill("H0")
+            page.locator("button", has_text="Calculate molar mass").click()
+            assert "subscripts must be positive" in page.locator("#toast").inner_text()
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.calculations") == before
+
+            assert not errors, "Uncaught JS errors:\\n" + "\\n".join(errors)
+        finally:
+            browser.close()
