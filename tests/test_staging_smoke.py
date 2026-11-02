@@ -831,7 +831,7 @@ def test_mobile_navigation_drawer_opens_and_closes_accessibly():
             assert scrim.get_attribute("aria-hidden") == "true"
 
             trigger.click()
-            scrim.click(position={"x": 5, "y": 5})
+            scrim.click(position={"x": 365, "y": 400})
             assert not page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
             assert trigger.get_attribute("aria-expanded") == "false"
         finally:
