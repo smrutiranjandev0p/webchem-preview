@@ -1143,3 +1143,10 @@ def test_quiz_history_and_mistakes_are_account_scoped():
     assert "localStorage.setItem(quizHistoryKey()," in source
     assert "localStorage.getItem(quizMistakesKey())" in source
     assert "localStorage.setItem(quizMistakesKey()," in source
+
+
+def test_backup_import_export_uses_account_scoped_profile_key():
+    """Backup profile data must follow the active learner namespace."""
+    source = Path("index.html").read_text(encoding="utf-8")
+    assert "profile:readBackupValue(profileStore(),{})" in source
+    assert "['profile',profileStore()]" in source
