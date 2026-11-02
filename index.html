@@ -463,6 +463,8 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
       <option value="massmolarity">Molarity from mass (g + molar mass)</option>
       <option value="normality">Normality (N = M × n-factor)</option>
       <option value="ppm">Aqueous ppm (mg/L approximation)</option>
+      <option value="normalityMass">Normality from mass + equivalent weight</option>
+      <option value="titration">Titration (M₁V₁n₁ = M₂V₂n₂)</option>
       <option value="equivalent">Normality from mass (equivalent weight)</option>
       <option value="titration">Titration (stoichiometric calculation)</option>
     </select>
@@ -902,11 +904,11 @@ restoreAuth()}init();
 /* WebChem calculator extension: additional analytical chemistry modes */
 (function(){
  const fieldWrap=document.createElement('div');fieldWrap.id='tutorExtraFields';fieldWrap.hidden=true;
- fieldWrap.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorMass">Solute mass (g)</label><input id="tutorMass" type="number" min="0" step="any" value="5"></div><div class="tutor-field"><label for="tutorMW">Molar mass (g/mol)</label><input id="tutorMW" type="number" min="0" step="any" value="58.44"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorNF">n-factor (normality)</label><input id="tutorNF" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorPPM">Concentration (mg/L)</label><input id="tutorPPM" type="number" min="0" step="any" value="25"></div></div>';
+ fieldWrap.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorMass">Solute mass (g)</label><input id="tutorMass" type="number" min="0" step="any" value="5"></div><div class="tutor-field"><label for="tutorMW">Molar mass (g/mol)</label><input id="tutorMW" type="number" min="0" step="any" value="58.44"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorNF">n-factor (normality)</label><input id="tutorNF" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorPPM">Concentration (mg/L)</label><input id="tutorPPM" type="number" min="0" step="any" value="25"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorEqW">Equivalent weight (g/eq)</label><input id="tutorEqW" type="number" min="0" step="any" value="49"></div><div class="tutor-field"><label for="tutorEqVol">Solution volume (L)</label><input id="tutorEqVol" type="number" min="0" step="any" value="1"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorT1">Titrant M₁ (mol/L)</label><input id="tutorT1" type="number" min="0" step="any" value="0.1"></div><div class="tutor-field"><label for="tutorTV1">Titrant V₁ (mL)</label><input id="tutorTV1" type="number" min="0" step="any" value="25"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorT2">Analyte M₂ (mol/L)</label><input id="tutorT2" type="number" min="0" step="any" value="0.1"></div><div class="tutor-field"><label for="tutorTV2">Analyte V₂ (mL)</label><input id="tutorTV2" type="number" min="0" step="any" value="25"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorStoich1">Titrant stoich factor n₁</label><input id="tutorStoich1" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorStoich2">Analyte stoich factor n₂</label><input id="tutorStoich2" type="number" min="0" step="any" value="1"></div></div>';
  document.getElementById('tutorDilutionFields').after(fieldWrap);
  const baseCalc=calc;
  calc=function(){
-  const t=mode.value, extra=['massmolarity','normality','ppm'].includes(t);
+  const t=mode.value, extra=['massmolarity','normality','ppm','normalityMass','titration'].includes(t);
   document.getElementById('tutorMolarityFields').hidden=extra||t!=='molarity';
   document.getElementById('tutorDilutionFields').hidden=extra||t!=='dilution';
   fieldWrap.hidden=!extra;
@@ -919,13 +921,21 @@ restoreAuth()}init();
    const M=val('tutorMoles'),nf=Number(document.getElementById('tutorNF').value);
    if(![M,nf].every(Number.isFinite)||M<0||nf<=0){res.innerHTML='<strong>Check inputs</strong><p>Molarity must be ≥0 and n-factor positive.</p>';return}
    res.innerHTML='<strong>'+(M*nf).toPrecision(6)+' N</strong><p>N = M × n-factor = '+M+' × '+nf+'. Enter molarity in the existing “Solute amount (mol)” field for this mode.</p>';
+  }else if(t==='normalityMass'){
+   const mass=Number(document.getElementById('tutorMass').value),eqw=Number(document.getElementById('tutorEqW').value),vol=Number(document.getElementById('tutorEqVol').value);
+   if(![mass,eqw,vol].every(Number.isFinite)||mass<0||eqw<=0||vol<=0){res.innerHTML='<strong>Check inputs</strong><p>Mass must be non-negative; equivalent weight and volume must be positive.</p>';return}
+   const N=mass/(eqw*vol);res.innerHTML='<strong>'+N.toPrecision(6)+' N</strong><p>Equivalents = mass / equivalent weight = '+mass+' / '+eqw+' = '+(mass/eqw).toPrecision(6)+' eq</p><p>N = equivalents / volume (L) = '+(mass/eqw).toPrecision(6)+' / '+vol+'</p><p>Equivalent weight = molar mass / n-factor (for the specified reaction).</p>';
+  }else if(t==='titration'){
+   const m2=Number(document.getElementById('tutorT2').value),v1=Number(document.getElementById('tutorTV1').value),v2=Number(document.getElementById('tutorTV2').value),n1=Number(document.getElementById('tutorStoich1').value),n2=Number(document.getElementById('tutorStoich2').value);
+   if(![m2,v1,v2,n1,n2].every(Number.isFinite)||m2<0||v1<=0||v2<0||n1<=0||n2<=0){res.innerHTML='<strong>Check inputs</strong><p>Use non-negative concentration/volume and positive titrant volume and stoichiometric factors.</p>';return}
+   const m1=m2*v2*n2/(v1*n1);res.innerHTML='<strong>Required titrant concentration M₁ = '+m1.toPrecision(6)+' mol/L</strong><p>From M₁V₁n₁ = M₂V₂n₂:</p><p>M₁ = ('+m2+' × '+v2+' × '+n2+') / ('+v1+' × '+n1+') = '+m1.toPrecision(6)+' mol/L</p><p>Volumes can both be in mL because the same unit cancels.</p>';
   }else{
    const mgL=Number(document.getElementById('tutorPPM').value);
    if(!Number.isFinite(mgL)||mgL<0){res.innerHTML='<strong>Check input</strong><p>Concentration must be non-negative.</p>';return}
    res.innerHTML='<strong>'+mgL.toPrecision(6)+' ppm (approx.)</strong><p>For dilute water with density near 1 kg/L: 1 mg/L ≈ 1 ppm. This approximation is not valid for every matrix.</p>';
   }
  };
- ['tutorMass','tutorMW','tutorNF','tutorPPM','tutorMoles','tutorVolume'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ ['tutorMass','tutorMW','tutorNF','tutorPPM','tutorMoles','tutorVolume','tutorEqW','tutorEqVol','tutorT1','tutorTV1','tutorT2','tutorTV2','tutorStoich1','tutorStoich2'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
  // Clarify the reused molarity input label for Normality mode.
  mode.addEventListener('change',()=>{const label=document.querySelector('label[for="tutorMoles"]');if(label)label.textContent=mode.value==='normality'?'Molarity (mol/L)':'Solute amount (mol)';});
  mode.dispatchEvent(new Event('change'));
