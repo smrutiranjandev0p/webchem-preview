@@ -25,7 +25,8 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Run staging smoke tests
         env:
-          WEBCHEM_STAGING_URL: https://beneficial-balance-staging.up.railway.app
+          WEBCHEM_FRONTEND_URL: https://smrutiranjandev0p.github.io/webchem-preview/
+          WEBCHEM_API_URL: https://beneficial-balance-staging.up.railway.app
         run: pytest -vv -s tests/test_staging_smoke.py
       - name: Upload browser diagnostics
         if: always()
