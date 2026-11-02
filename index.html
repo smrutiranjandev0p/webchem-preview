@@ -883,7 +883,7 @@ function authStatus(user){
 }
 function togglePassword(inputId,button){const input=document.getElementById(inputId);if(!input)return;const reveal=input.type==='password';input.type=reveal?'text':'password';button.textContent=reveal?'🙈':'👁️';button.setAttribute('aria-label',reveal?'Hide password':'Show password');button.setAttribute('aria-pressed',String(reveal));}
 
-let authStage='login', authEmailPending='';
+var authStage='login', authEmailPending='';
 function gateShow(on){const e=document.getElementById('authGate'),app=document.querySelector('.app');if(e)e.style.display=on?'grid':'none';if(app)app.inert=!!on;document.body.classList.toggle('auth-locked',!!on);const fb=document.getElementById('firebot-launch'),panel=document.getElementById('firebot-panel');if(fb)fb.style.display=on?'none':'';if(panel){panel.style.display=on?'none':'';panel.setAttribute('aria-hidden',on?'true':'false')}}
 function gateMsg(t,bad=false){const e=document.getElementById('gateMessage');if(e){e.textContent=t;e.style.color=bad?'#ff9b9b':'#8ee2c3'}}
 function gateView(stage,email=''){
