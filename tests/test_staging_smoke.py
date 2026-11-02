@@ -1115,7 +1115,8 @@ def test_ai_tutor_request_error_handling_and_mode_history_isolation():
 def test_service_worker_never_caches_account_or_api_responses():
     """Keep authenticated/account-specific API data out of the offline cache."""
     source = Path("sw.js").read_text(encoding="utf-8")
-    assert "url.pathname.includes('/api/')" in source
-    assert "url.pathname.includes('/auth/')" in source
-    assert "url.pathname.includes('/progress')" in source
+    assert "const path=url.pathname.toLowerCase()" in source
+    assert "path===prefix||path.startsWith(prefix+'/')" in source
+    # Include both bare route roots (/auth, /api) and nested endpoints.
+    assert "['/api','/auth','/progress']" in source
     assert "Never cache API/auth/progress responses" in source
