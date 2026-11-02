@@ -92,12 +92,12 @@ def test_account_switch_isolation_with_mocked_cloud_api():
               const keyA=userStateKey({id:'account-A'}), keyB=userStateKey({id:'account-B'});
               return {keyA,keyB,active:currentUser&&currentUser.id};
             }""")
-            result = page.evaluate("""() => ({
-              aKey:userStateKey({id:'account-A'}), bKey:userStateKey({id:'account-B'}),
-              a:JSON.parse(localStorage.getItem(userStateKey({id:'account-A'}))||'{}'),
-              b:JSON.parse(localStorage.getItem(userStateKey({id:'account-B'}))||'{}'),
-              active:currentUser&&currentUser.id
-            })""")
+            result = page.evaluate("""() => {const t=window.__WEBCHEM_TEST__; return {
+              aKey:t.userStateKey({id:'account-A'}), bKey:t.userStateKey({id:'account-B'}),
+              a:JSON.parse(localStorage.getItem(t.userStateKey({id:'account-A'}))||'{}'),
+              b:JSON.parse(localStorage.getItem(t.userStateKey({id:'account-B'}))||'{}'),
+              active:t.currentUser&&t.currentUser.id
+            }}""")
             assert result["active"] == "account-B", f"Expected account B active: {result}"
             assert result['aKey'].endswith('account-a') and result['bKey'].endswith('account-b'), f"Unexpected account storage keys: {result}"
             assert "A-only-marker" in result["a"].get("completed", []), f"Account A progress not stored separately: {result}"
@@ -106,14 +106,14 @@ def test_account_switch_isolation_with_mocked_cloud_api():
             assert "lesson-account-b" in result["b"].get("completed", []), f"Account B cloud data missing: {result}"
 
             # Logout must clear auth and return to guest without leaking account B data.
-            logout_result = page.evaluate("""() => {
-              state.completed=['B-only-marker']; save();
-              logout();
+            logout_result = page.evaluate("""() => {const t=window.__WEBCHEM_TEST__;
+              t.state.completed=['B-only-marker']; t.save();
+              t.logout();
               return {
-                active:currentUser,
-                token:localStorage.getItem(AUTH_TOKEN_KEY),
-                guest:JSON.parse(localStorage.getItem(GUEST_STATE_KEY)||'{}'),
-                accountB:JSON.parse(localStorage.getItem(userStateKey({id:'account-B'}))||'{}')
+                active:t.currentUser,
+                token:localStorage.getItem(t.AUTH_TOKEN_KEY),
+                guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}'),
+                accountB:JSON.parse(localStorage.getItem(t.userStateKey({id:'account-B'}))||'{}')
               };
             }""")
             assert logout_result["active"] is None, f"User remained authenticated after logout: {logout_result}"
