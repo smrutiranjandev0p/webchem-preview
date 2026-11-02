@@ -1054,3 +1054,59 @@ def test_quiz_question_bank_schema_and_unique_ids():
             assert audit["duplicateIds"] == [], f"Question IDs must be unique: {audit['duplicateIds']}"
         finally:
             browser.close()
+
+
+def test_ai_tutor_request_error_handling_and_mode_history_isolation():
+    """AI responses are stored only on success; tutor and FireBot histories stay separate."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+
+        def ai_route(route):
+            payload = route.request.post_data_json
+            mode = payload["mode"]
+            prompt = payload["messages"][-1]["content"]
+            if prompt == "trigger failure":
+                route.fulfill(
+                    status=503,
+                    content_type="application/json",
+                    body='{"success":false,"error":"AI temporarily unavailable"}',
+                )
+            else:
+                answer = "Tutor stub response" if mode == "tutor" else "FireBot stub response"
+                route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body='{"success":true,"answer":"' + answer + '"}',
+                )
+
+        page.route("**/api/auth/me", lambda route: route.fulfill(
+            status=401, content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}'
+        ))
+        page.route("**/api/ai/chat", ai_route)
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_selector("#authGate", timeout=15_000)
+            result = page.evaluate("""async () => {
+              const t=window.__WEBCHEM_TEST__;
+              const tutor=await t.askWebChemAI('tutor','successful tutor prompt');
+              const firebot=await t.askWebChemAI('firebot','successful FireBot prompt');
+              let error='';
+              try { await t.askWebChemAI('tutor','trigger failure'); }
+              catch(e) { error=e.message; }
+              return {
+                tutor,firebot,error,
+                tutorHistory:t.webChemAIHistory.tutor,
+                firebotHistory:t.webChemAIHistory.firebot
+              };
+            }""")
+            assert result["tutor"] == "Tutor stub response"
+            assert result["firebot"] == "FireBot stub response"
+            assert "AI temporarily unavailable" in result["error"], result
+            assert len(result["tutorHistory"]) == 2, "Failed AI request must not be added to tutor history"
+            assert result["tutorHistory"][-1]["content"] == "Tutor stub response"
+            assert len(result["firebotHistory"]) == 2, "FireBot history must remain separate from tutor history"
+            assert result["firebotHistory"][-1]["content"] == "FireBot stub response"
+        finally:
+            browser.close()
