@@ -1132,3 +1132,14 @@ def test_profile_details_storage_is_account_scoped():
     assert "webchem-profile-details-'+String(id).toLowerCase()" in source
     assert "read(profileStore(),{})" in source
     assert "localStorage.setItem(profileStore(),JSON.stringify(d))" in source
+
+
+def test_quiz_history_and_mistakes_are_account_scoped():
+    """Quiz analytics and review mistakes must not mix across signed-in learners."""
+    source = Path("index.html").read_text(encoding="utf-8")
+    assert "function quizHistoryKey()" in source
+    assert "function quizMistakesKey()" in source
+    assert "localStorage.getItem(quizHistoryKey())" in source
+    assert "localStorage.setItem(quizHistoryKey()," in source
+    assert "localStorage.getItem(quizMistakesKey())" in source
+    assert "localStorage.setItem(quizMistakesKey()," in source
