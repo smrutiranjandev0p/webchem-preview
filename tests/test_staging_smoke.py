@@ -1115,6 +1115,9 @@ def test_ai_tutor_request_error_handling_and_mode_history_isolation():
 def test_service_worker_never_caches_account_or_api_responses():
     """Keep authenticated/account-specific API data out of the offline cache."""
     source = Path("sw.js").read_text(encoding="utf-8")
+    assert "const CACHE_NAME='webchem-shell-v3'" in source
+    # Bump cache version so activation deletes the old broad cache, not just future API responses.
+    assert "k.startsWith('webchem-')&&k!==CACHE_NAME" in source
     assert "const path=url.pathname.toLowerCase()" in source
     assert "path===prefix||path.startsWith(prefix+'/')" in source
     # Include both bare route roots (/auth, /api) and nested endpoints.
