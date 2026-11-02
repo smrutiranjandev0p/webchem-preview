@@ -121,3 +121,32 @@ def test_account_switch_isolation_with_mocked_cloud_api():
             assert not errors, "Uncaught JS errors:\n" + "\n".join(errors)
         finally:
             browser.close()
+
+
+def test_local_progress_survives_page_reload():
+    """Verify local guest progress persists across a browser refresh."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(700)
+            page.evaluate("""() => {
+              state.completed=['reload-persistence-marker'];
+              save();
+            }""")
+            page.reload(wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(500)
+            result=page.evaluate("""() => ({
+              saved:JSON.parse(localStorage.getItem(GUEST_STATE_KEY)||'{}'),
+              loaded:state.completed
+            })""")
+            assert "reload-persistence-marker" in result["saved"].get("completed", []), f"Guest progress not persisted locally: {result}"
+            assert "reload-persistence-marker" in result["loaded"], f"Guest progress not restored after refresh: {result}"
+        finally:
+            browser.close()
