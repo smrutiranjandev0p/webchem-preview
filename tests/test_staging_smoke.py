@@ -438,3 +438,84 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
             assert "account-before-logout" not in result["guest"], f"Account progress leaked to guest: {result}"
         finally:
             browser.close()
+
+
+def test_pending_account_a_save_cannot_mutate_account_b_after_switch():
+    """A late save from account A must not alter account B after an account switch."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const t=window.__WEBCHEM_TEST__;
+              const accountA={id:'race-account-A',username:'Race Account A'};
+              const accountB={id:'race-account-B',username:'Race Account B'};
+              localStorage.setItem(t.AUTH_TOKEN_KEY,'race-token-A');
+              t.currentUser=accountA;
+              t.cloudReady=true;
+              t.cloudDirty=true;
+              t.cloudSyncBusy=false;
+              t.cloudSessionVersion++;
+              t.cloudStateVersion++;
+              t.state={...t.defaultState,completed:['A-private-progress']};
+              localStorage.setItem(t.userStateKey(accountA),JSON.stringify(t.state));
+              const originalFetch=window.fetch;
+              let resolveOldPut, putStartedResolve;
+              const putStarted=new Promise(resolve=>{putStartedResolve=resolve});
+              window.fetch=(url,options={})=>{
+                if(String(url).endsWith('/api/progress')&&options.method==='PUT'){
+                  putStartedResolve();
+                  // Deliberately ignore abort and resolve late to exercise session guards.
+                  return new Promise(resolve=>{resolveOldPut=resolve});
+                }
+                if(String(url).endsWith('/api/progress')&&options.method!=='PUT'){
+                  return Promise.resolve({ok:true,json:async()=>({success:true,progress:{completed:['B-cloud-progress']}})});
+                }
+                return Promise.resolve({ok:true,json:async()=>({success:true})});
+              };
+              const oldSave=t.syncProgressToCloud();
+              await putStarted;
+              await t.gateSuccess({token:'race-token-B',user:accountB});
+              const afterSwitch={
+                user:t.currentUser&&t.currentUser.id,
+                token:localStorage.getItem(t.AUTH_TOKEN_KEY),
+                completed:[...t.state.completed],
+                ready:t.cloudReady
+              };
+              if(resolveOldPut)resolveOldPut({ok:true,json:async()=>({success:true})});
+              await oldSave;
+              window.fetch=originalFetch;
+              return {
+                afterSwitch,
+                afterLateSave:{
+                  user:t.currentUser&&t.currentUser.id,
+                  token:localStorage.getItem(t.AUTH_TOKEN_KEY),
+                  completed:[...t.state.completed],
+                  ready:t.cloudReady,
+                  dirty:t.cloudDirty,
+                  busy:t.cloudSyncBusy,
+                  accountB:JSON.parse(localStorage.getItem(t.userStateKey(accountB))||'{}').completed,
+                  accountA:JSON.parse(localStorage.getItem(t.userStateKey(accountA))||'{}').completed
+                }
+              };
+            }""")
+            assert result["afterSwitch"]["user"] == "race-account-B", f"Account switch did not activate B: {result}"
+            assert result["afterSwitch"]["token"] == "race-token-B", f"Account B token missing after switch: {result}"
+            assert "B-cloud-progress" in result["afterSwitch"]["completed"], f"Account B cloud state was not loaded: {result}"
+            final = result["afterLateSave"]
+            assert final["user"] == "race-account-B", f"Late account A save changed active user: {result}"
+            assert final["token"] == "race-token-B", f"Late account A save changed active token: {result}"
+            assert "B-cloud-progress" in final["completed"], f"Late account A save overwrote B progress: {result}"
+            assert "A-private-progress" not in final["completed"], f"Account A progress leaked into B: {result}"
+            assert "A-private-progress" in final["accountA"], f"Account A local progress unexpectedly disappeared: {result}"
+            assert final["ready"] is True, f"Late account A save altered B cloud readiness: {result}"
+            assert final["busy"] is False, f"Late account A save altered B sync state: {result}"
+        finally:
+            browser.close()
