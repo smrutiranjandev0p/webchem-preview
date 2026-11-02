@@ -333,14 +333,19 @@ def test_stale_cloud_response_after_logout_is_ignored():
               t.cloudDirty=false;
               t.cloudSessionVersion++;
               const originalFetch=window.fetch;
-              let resolveFetch;
-              window.fetch=()=>new Promise(resolve=>{resolveFetch=resolve});
+              let fetchSignal=null;
+              // Deliberately ignore AbortSignal and return a late response to exercise
+              // the session-version guard even when a transport cannot cancel.
+              window.fetch=async (_url,options)=>{
+                fetchSignal=options&&options.signal;
+                await new Promise(resolve=>setTimeout(resolve,200));
+                return {ok:true,json:async()=>({success:true,progress:{completed:['stale-cloud-marker']}})};
+              };
               const pending=t.loadCloudProgress(user,{mergeGuest:false});
-              // Logout changes the session version before the old response arrives.
+              // Logout cancels the in-flight request and invalidates its session token.
               t.logout();
               t.state.completed=['guest-after-logout'];
               t.save();
-              resolveFetch({ok:true,json:async()=>({success:true,progress:{completed:['stale-cloud-marker']}})});
               await pending;
               window.fetch=originalFetch;
               return {
@@ -348,7 +353,8 @@ def test_stale_cloud_response_after_logout_is_ignored():
                 ready:t.cloudReady,
                 dirty:t.cloudDirty,
                 guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}').completed,
-                token:localStorage.getItem(t.AUTH_TOKEN_KEY)
+                token:localStorage.getItem(t.AUTH_TOKEN_KEY),
+                signalAborted:!!(fetchSignal&&fetchSignal.aborted)
               };
             }""")
             assert result["currentUser"] is None, f"Logout session was unexpectedly restored: {result}"
