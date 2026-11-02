@@ -717,3 +717,35 @@ def test_full_backup_import_restores_all_v2_data():
             assert result["preferences"]["quizLanguage"] == "Hindi", f"Preferences not restored: {result}"
         finally:
             browser.close()
+
+
+
+def test_backup_import_rejects_unknown_future_version_without_changes():
+    """Do not silently interpret a backup from a newer incompatible format."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(300)
+            result = page.evaluate("""async () => {
+              const prior=window.__WEBCHEM_TEST__.state.completed.slice();
+              localStorage.setItem('webchemQuizHistory',JSON.stringify([{score:73}]));
+              const alerts=[]; window.alert=message=>alerts.push(String(message)); window.confirm=()=>true;
+              const backup={version:3,state:{completed:['future-data']},quizHistory:[{score:100}]};
+              const file=new File([JSON.stringify(backup)],'future-backup.json',{type:'application/json'});
+              importProgressBackup({files:[file],value:'future-backup.json'});
+              await new Promise(resolve=>setTimeout(resolve,80));
+              return {alerts,prior,completed:window.__WEBCHEM_TEST__.state.completed,
+                history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]')};
+            }""")
+            assert any("Unsupported backup version" in msg for msg in result["alerts"]), f"Future backup version was not rejected: {result}"
+            assert "future-data" not in result["completed"], f"Future backup modified progress: {result}"
+            assert result["history"] == [{"score": 73}], f"Future backup modified local quiz history: {result}"
+        finally:
+            browser.close()
