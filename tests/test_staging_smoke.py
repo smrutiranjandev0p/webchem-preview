@@ -862,8 +862,10 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             page.locator("#quizCount").select_option("10")
             page.locator("#quizMode").select_option("cbt")
             page.locator("#quizMinutes").select_option("5")
-            page.locator("#startQuizBtn").click()
+            # Register the CBT confirmation handler before clicking; otherwise
+            # Playwright auto-dismisses the dialog and startQuiz() is cancelled.
             page.on("dialog", lambda dialog: dialog.accept())
+            page.locator("#startQuizBtn").click()
             page.wait_for_selector(".quizq", timeout=10_000)
 
             # Answer then clear: clearing must return the question to unanswered.
