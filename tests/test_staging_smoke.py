@@ -836,3 +836,55 @@ def test_mobile_navigation_drawer_opens_and_closes_accessibly():
             assert trigger.get_attribute("aria-expanded") == "false"
         finally:
             browser.close()
+
+
+def test_cbt_quiz_navigation_mark_clear_and_submission():
+    """Exercise real CBT controls: answer, clear, question palette, mark, and submit."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_selector("#authGate", timeout=15_000)
+            page.evaluate("""async () => {
+              await window.__WEBCHEM_TEST__.gateSuccess({
+                token:'cbt-smoke-token',user:{id:'cbt-smoke-user',username:'CBT Smoke'}
+              });
+              navigate('quiz');
+            }""")
+            page.wait_for_selector("#quizTopic", timeout=10_000)
+            page.locator("#quizTopic").select_option(label="All topics")
+            page.locator("#quizCount").select_option("10")
+            page.locator("#quizMode").select_option("cbt")
+            page.locator("#quizMinutes").select_option("5")
+            page.locator("#startQuizBtn").click()
+            page.on("dialog", lambda dialog: dialog.accept())
+            page.wait_for_selector(".quizq", timeout=10_000)
+
+            # Answer then clear: clearing must return the question to unanswered.
+            page.locator("[data-answer]").first.click()
+            assert page.locator(".quiz-palette-btn.answered").count() == 1
+            page.locator("#clearAnswer").click()
+            assert page.locator(".quiz-palette-btn.answered").count() == 0
+
+            # Mark for review, move to question 2, then return through palette.
+            page.locator("#markQuestion").click()
+            assert page.locator(".quiz-palette-btn.marked").count() == 1
+            page.locator("#nextExam").click()
+            assert "Question 2 of" in page.locator(".quiz-run-head h3").inner_text()
+            page.locator('[data-jump="0"]').click()
+            assert "Question 1 of" in page.locator(".quiz-run-head h3").inner_text()
+
+            page.locator("#submitExam").click()
+            page.wait_for_selector(".quiz-result-panel", timeout=10_000)
+            assert "Quiz complete!" in page.locator(".quiz-result-panel").inner_text()
+            history = page.evaluate("JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]')")
+            assert history and history[-1]["mode"] == "cbt", f"CBT attempt not recorded: {history}"
+            assert history[-1]["total"] == 10, f"Unexpected quiz total in history: {history[-1]}"
+        finally:
+            browser.close()
