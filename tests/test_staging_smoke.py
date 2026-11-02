@@ -1150,3 +1150,13 @@ def test_backup_import_export_uses_account_scoped_profile_key():
     source = Path("index.html").read_text(encoding="utf-8")
     assert "profile:readBackupValue(profileStore(),{})" in source
     assert "['profile',profileStore()]" in source
+
+
+def test_study_planner_and_flashcards_are_account_scoped():
+    """Personal planner and flashcard mastery data must not cross learner accounts."""
+    source = Path("index.html").read_text(encoding="utf-8")
+    assert "function learnerLocalKey(base)" in source
+    assert "const KEY=learnerLocalKey('webchem-study-planner-v1')" in source
+    assert "const KEY=learnerLocalKey('webchem-flashcards-v1')" in source
+    assert "readBackupValue(learnerLocalKey('webchem-study-planner-v1'),{})" in source
+    assert "readBackupValue(learnerLocalKey('webchem-flashcards-v1'),{})" in source
