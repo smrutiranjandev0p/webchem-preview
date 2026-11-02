@@ -109,7 +109,7 @@ def test_account_switch_isolation_with_mocked_cloud_api():
               t.state.completed=['B-only-marker']; t.save();
               t.logout();
               return {
-                active:currentUser:t.currentUser,
+                active:t.currentUser,
                 token:localStorage.getItem(t.AUTH_TOKEN_KEY),
                 guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}'),
                 accountB:JSON.parse(localStorage.getItem(t.userStateKey({id:'account-B'}))||'{}')
