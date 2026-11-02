@@ -475,6 +475,7 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
       <option value="chloride">Chloride (Mohr titration)</option>
       <option value="alkalinity">Alkalinity as CaCO₃</option>
       <option value="do">Dissolved oxygen (Winkler titration)</option>
+      <option value="gcv">Coal GCV (bomb calorimeter)</option>
     </select>
   </div>
 
@@ -1041,6 +1042,24 @@ restoreAuth()}init();
   res.innerHTML='<strong>Alkalinity = '+alkalinity.toFixed(3)+' mg/L as CaCO₃</strong><p>Alkalinity = (V_acid − V_blank) × N_acid × 50000 / V_sample</p><p class="tutor-muted tutor-small">Use acid normality (not molarity unless the acid’s n-factor is accounted for) and the selected endpoint.</p>';
  };
  ['tutorWaterSample','tutorWaterTitrant','tutorWaterMolarity','tutorWaterBlank','tutorWaterEC','tutorWaterFactor'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ mode.addEventListener('change',calc);calc();
+})();
+(function(){
+ const panel=document.createElement('div');panel.id='tutorGCVFields';panel.hidden=true;
+ panel.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorGCVMass">Coal sample mass (g)</label><input id="tutorGCVMass" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorGCVWaterEq">Calorimeter water equivalent (cal/°C)</label><input id="tutorGCVWaterEq" type="number" min="0" step="any" value="2500"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorGCVRise">Corrected temperature rise (°C)</label><input id="tutorGCVRise" type="number" min="0" step="any" value="2.5"></div><div class="tutor-field"><label for="tutorGCVCorrections">Total corrections (cal)</label><input id="tutorGCVCorrections" type="number" step="any" value="50"></div></div><p class="tutor-muted tutor-small">Enter temperature rise already corrected for cooling, and total acid/fuse-wire/thread corrections in calories. Use the bomb-calorimeter SOP for your instrument.</p>';
+ document.getElementById('tutorWaterFields').after(panel);
+ const previous=calc;
+ calc=function(){
+  const coal=mode.value==='gcv';panel.hidden=!coal;
+  if(!coal){previous();return}
+  const mass=Number(document.getElementById('tutorGCVMass').value),waterEq=Number(document.getElementById('tutorGCVWaterEq').value),rise=Number(document.getElementById('tutorGCVRise').value),corr=Number(document.getElementById('tutorGCVCorrections').value);
+  if(![mass,waterEq,rise,corr].every(Number.isFinite)||mass<=0||waterEq<=0||rise<0){res.innerHTML='<strong>Check inputs</strong><p>Sample mass and calorimeter water equivalent must be positive; temperature rise must be non-negative. Enter valid correction values.</p>';return}
+  const heat=waterEq*rise-corr;
+  if(heat<0){res.innerHTML='<strong>Correction exceeds measured heat</strong><p>Check the temperature rise and correction inputs.</p>';return}
+  const gcv=heat/mass;
+  res.innerHTML='<strong>Gross calorific value = '+gcv.toFixed(2)+' kcal/kg</strong><p>GCV = [(W × ΔT) − corrections] / sample mass</p><p>= [('+waterEq+' × '+rise+') − '+corr+'] / '+mass+' g</p><p>Heat released = '+heat.toFixed(2)+' cal. Since cal/g is numerically equal to kcal/kg, result = '+gcv.toFixed(2)+' kcal/kg.</p><p class="tutor-muted tutor-small">This simplified calculation assumes W is the total calorimeter water equivalent and ΔT is corrected. Apply instrument-specific corrections and reporting basis (as-received, air-dried, or dry) as required.</p>';
+ };
+ ['tutorGCVMass','tutorGCVWaterEq','tutorGCVRise','tutorGCVCorrections'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
  mode.addEventListener('change',calc);calc();
 })();
 (function(){
