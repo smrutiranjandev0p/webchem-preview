@@ -196,3 +196,60 @@ def test_cloud_load_failure_preserves_local_progress_and_retries():
             assert progress_get_calls["count"] >= 1, "Cloud GET route was not called"
         finally:
             browser.close()
+
+
+def test_cloud_save_failure_keeps_dirty_and_recovers_on_retry():
+    """A transient cloud PUT failure must retain dirty state and recover on retry."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        put_calls = {"count": 0}
+
+        def api_mock(route):
+            req = route.request
+            if req.url.endswith("/api/auth/me"):
+                route.fulfill(status=401, content_type="application/json",
+                              body='{"success":false,"error":"Unauthenticated"}')
+            elif req.url.endswith("/api/progress") and req.method == "GET":
+                route.fulfill(status=200, content_type="application/json",
+                              body='{"success":true,"progress":{}}')
+            elif req.url.endswith("/api/progress") and req.method == "PUT":
+                put_calls["count"] += 1
+                if put_calls["count"] == 1:
+                    route.fulfill(status=503, content_type="application/json",
+                                  body='{"success":false,"error":"temporary outage"}')
+                else:
+                    route.fulfill(status=200, content_type="application/json",
+                                  body='{"success":true}')
+            else:
+                route.fulfill(status=200, content_type="application/json",
+                              body='{"success":true}')
+        page.route("**/api/**", api_mock)
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const user={id:'save-retry-user',username:'Save Retry User'};
+              await gateSuccess({token:'save-retry-token',user});
+              await loadCloudProgress(user,{mergeGuest:false});
+              state.completed=['cloud-save-retry-marker'];
+              save();
+              // First explicit flush hits the simulated 503.
+              await syncProgressToCloud();
+              const afterFailure={dirty:cloudDirty,ready:cloudReady};
+              // Retry the pending dirty state; second PUT succeeds.
+              await syncProgressToCloud();
+              return {
+                afterFailure,
+                afterRetry:{dirty:cloudDirty,ready:cloudReady},
+                saved:JSON.parse(localStorage.getItem(userStateKey(user))||'{}').completed
+              };
+            }""")
+            assert result["afterFailure"]["ready"] is True, f"Cloud load should be ready before save: {result}"
+            assert result["afterFailure"]["dirty"] is True, f"Failed PUT must retain dirty state: {result}"
+            assert result["afterRetry"]["dirty"] is False, f"Successful retry should clear dirty state: {result}"
+            assert result["afterRetry"]["ready"] is True, f"Cloud readiness unexpectedly lost: {result}"
+            assert "cloud-save-retry-marker" in result["saved"], f"Local state missing after retry: {result}"
+            assert put_calls["count"] >= 2, f"Expected failed PUT followed by retry, got {put_calls}"
+        finally:
+            browser.close()
