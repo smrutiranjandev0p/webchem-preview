@@ -12,7 +12,7 @@ permissions:
 jobs:
   staging-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,9 +23,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest playwright
           python -m playwright install --with-deps chromium
-      - name: Run staging smoke tests
+      - name: Serve current staging branch
+        run: |
+          python -m http.server 8000 --bind 127.0.0.1 > /tmp/webchem-http.log 2>&1 &
+          for i in $(seq 1 20); do
+            curl --fail http://127.0.0.1:8000/ >/dev/null && break
+            sleep 1
+          done
+      - name: Run browser and account-isolation tests
         env:
-          WEBCHEM_FRONTEND_URL: https://smrutiranjandev0p.github.io/webchem-preview/
+          WEBCHEM_FRONTEND_URL: http://127.0.0.1:8000/
           WEBCHEM_API_URL: https://beneficial-balance-staging.up.railway.app
         run: pytest -vv -s tests/test_staging_smoke.py
       - name: Upload browser diagnostics
