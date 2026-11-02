@@ -45,7 +45,7 @@ jobs:
               print(f"Checking inline script {index} ({len(script)} characters)")
           PY
           npm install --no-save acorn
-          node -e 'const fs=require("fs"),acorn=require("acorn");for(let i=0;i<20;i++){let p="/tmp/webchem-inline-"+i+".js";if(!fs.existsSync(p))break;let s=fs.readFileSync(p,"utf8");try{acorn.parse(s,{ecmaVersion:"latest",sourceType:"script",allowAwaitOutsideFunction:true})}catch(e){let n=e.pos||0,b=s.slice(0,n),line=b.split("\\n").length,col=n-b.lastIndexOf("\\n");console.error("Acorn script "+i+": "+e.message+" at "+line+":"+col+" offset "+n);console.error(s.slice(Math.max(0,n-600),Math.min(s.length,n+600)));process.exitCode=1}}'
+          node -e 'const fs=require("fs"),acorn=require("acorn");for(let i=0;i<20;i++){let p="/tmp/webchem-inline-"+i+".js";if(!fs.existsSync(p))break;let s=fs.readFileSync(p,"utf8");try{acorn.parse(s,{ecmaVersion:"latest",sourceType:"script",allowAwaitOutsideFunction:true,locations:true})}catch(e){let n=Math.min(e.pos||s.length,s.length),loc=e.loc;console.error("Acorn script "+i+": "+e.message+" at "+(loc?loc.line:"?")+":"+(loc?loc.column+1:"?")+" offset "+n+" (source length "+s.length+")");console.error(s.slice(Math.max(0,n-600),Math.min(s.length,n+600)));process.exitCode=1}}'
           for script in /tmp/webchem-inline-*.js; do node --check "$script"; done
       - name: Run browser and account-isolation tests
         env:
