@@ -987,3 +987,47 @@ def test_chemistry_calculators_validate_inputs_and_allow_zero_amounts():
             assert not errors, "Uncaught JS errors:\\n" + "\\n".join(errors)
         finally:
             browser.close()
+
+
+def test_lesson_completion_awards_points_once_and_persists_after_reload():
+    """Completing a real lesson persists; repeat completion and unknown IDs cannot farm points."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_selector("#authGate", timeout=15_000)
+            page.wait_for_timeout(300)
+
+            first = page.evaluate("""() => {
+              const t=window.__WEBCHEM_TEST__;
+              t.state={...t.defaultState,completed:[],points:0};
+              completeLesson('atomic');
+              const afterFirst={completed:[...t.state.completed],points:t.state.points};
+              completeLesson('atomic');
+              const afterRepeat={completed:[...t.state.completed],points:t.state.points};
+              completeLesson('not-a-real-lesson');
+              return {afterFirst,afterRepeat,afterInvalid:{completed:[...t.state.completed],points:t.state.points}};
+            }""")
+            assert first["afterFirst"] == {"completed": ["atomic"], "points": 10}, f"Lesson completion did not award expected progress: {first}"
+            assert first["afterRepeat"] == first["afterFirst"], f"Repeated completion awarded duplicate points: {first}"
+            assert first["afterInvalid"] == first["afterFirst"], f"Unknown lesson mutated progress: {first}"
+
+            page.reload(wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_selector("#authGate", timeout=15_000)
+            page.wait_for_timeout(350)
+            restored = page.evaluate("""() => {
+              const t=window.__WEBCHEM_TEST__;
+              return {completed:t.state.completed,points:t.state.points,
+                guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}')};
+            }""")
+            assert "atomic" in restored["completed"], f"Lesson completion was not restored after refresh: {restored}"
+            assert restored["points"] == 10, f"Lesson points did not persist correctly: {restored}"
+            assert restored["guest"].get("points") == 10, f"Guest progress storage missing awarded points: {restored}"
+        finally:
+            browser.close()
