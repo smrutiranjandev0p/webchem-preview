@@ -539,11 +539,24 @@ function solveChemistryExpression(input){
 }
 const webChemAIHistory={tutor:[],firebot:[]};
 async function askWebChemAI(mode,message){
+ if(!['tutor','firebot'].includes(mode))throw new Error('Unknown AI assistant mode.');
+ const prompt=String(message||'').trim();
+ if(!prompt)throw new Error('Please enter a question first.');
+ if(prompt.length>8000)throw new Error('Your message is too long. Please keep it under 8,000 characters.');
  const history=webChemAIHistory[mode]||[];
- const next=[...history,{role:'user',content:message}].slice(-10);
- const response=await fetch(API+'/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({mode,messages:next})});
- let data={};try{data=await response.json()}catch{}
+ const next=[...history,{role:'user',content:prompt}].slice(-10);
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),45000);
+ let response,data={};
+ try{
+  response=await fetch(API+'/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({mode,messages:next}),signal:controller.signal});
+  try{data=await response.json()}catch{}
+ }catch(error){
+  if(error&&error.name==='AbortError')throw new Error('AI request timed out after 45 seconds. Please try again.');
+  throw new Error('Unable to connect to WebChem AI. Check your connection and try again.');
+ }finally{clearTimeout(timeout)}
  if(!response.ok||!data.success)throw new Error(data.error||'AI request failed. Please try again.');
+ if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('AI returned an empty response. Please try again.');
  webChemAIHistory[mode]=[...next,{role:'assistant',content:data.answer}].slice(-10);
  return data.answer;
 }
