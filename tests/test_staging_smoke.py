@@ -630,3 +630,37 @@ def test_legacy_backup_keeps_newer_local_study_data():
             assert "lesson-1" in result["completed"], f"Legacy core progress was not imported: {result}"
         finally:
             browser.close()
+
+
+def test_backup_import_confirmation_shows_backup_summary_and_can_cancel():
+    """Show metadata/counts before replacing data, and preserve data when cancelled."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(300)
+            result = page.evaluate("""async () => {
+              localStorage.setItem('webchemQuizHistory',JSON.stringify([{score:77}]));
+              const prompts=[]; window.confirm=message=>{prompts.push(String(message));return false};
+              window.alert=()=>{};
+              const backup={version:2,exportedAt:'2026-11-02T12:00:00Z',
+                state:{completed:['new-lesson']},quizHistory:[{score:99}],quizMistakes:['m1'],
+                studyPlanner:{minutes:20}};
+              const file=new File([JSON.stringify(backup)],'backup.json',{type:'application/json'});
+              importProgressBackup({files:[file],value:'backup.json'});
+              await new Promise(resolve=>setTimeout(resolve,80));
+              return {prompt:prompts[0],history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]'),
+                completed:window.__WEBCHEM_TEST__.state.completed};
+            }""")
+            for expected in ("Backup version: 2", "Quiz history: 1 records", "Quiz mistakes: 1 records", "studyPlanner"):
+                assert expected in result["prompt"], f"Backup confirmation missing {expected}: {result}"
+            assert result["history"] == [{"score": 77}], f"Cancelled import overwrote existing data: {result}"
+            assert "new-lesson" not in result["completed"], f"Cancelled import changed progress: {result}"
+        finally:
+            browser.close()
