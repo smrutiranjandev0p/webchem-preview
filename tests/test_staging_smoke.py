@@ -1110,3 +1110,12 @@ def test_ai_tutor_request_error_handling_and_mode_history_isolation():
             assert result["firebotHistory"][-1]["content"] == "FireBot stub response"
         finally:
             browser.close()
+
+
+def test_service_worker_never_caches_account_or_api_responses():
+    """Keep authenticated/account-specific API data out of the offline cache."""
+    source = Path("sw.js").read_text(encoding="utf-8")
+    assert "url.pathname.includes('/api/')" in source
+    assert "url.pathname.includes('/auth/')" in source
+    assert "url.pathname.includes('/progress')" in source
+    assert "Never cache API/auth/progress responses" in source
