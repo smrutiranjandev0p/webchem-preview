@@ -906,6 +906,17 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             assert history[-1]["unanswered"] == 9, f"Expected nine unanswered questions: {history[-1]}"
             assert 0 <= history[-1]["percent"] <= 100, f"Invalid CBT percentage: {history[-1]}"
             assert page.locator(".quiz-review-row").count() == 10, "Result should show one review row per question"
-            assert page.get_by_role("button", name="Export result (CSV)").is_visible()
+            export_button = page.get_by_role("button", name="Export result (CSV)")
+            assert export_button.is_visible()
+            with page.expect_download() as download_info:
+                export_button.click()
+            download = download_info.value
+            csv_bytes = download.path().read_bytes()
+            assert csv_bytes.startswith(b"\\xef\\xbb\\xbf"), "CSV should include UTF-8 BOM for spreadsheet compatibility"
+            csv_text = csv_bytes.decode("utf-8-sig")
+            csv_lines = csv_text.splitlines()
+            assert csv_lines[0] == "Date,Topic,Mode,Percent,Correct,Wrong,Unanswered,Total"
+            assert len(csv_lines) == 2, f"CSV should contain header and one attempt row: {csv_lines}"
+            assert csv_lines[1].split(",")[2] == "cbt", f"CSV should preserve CBT mode: {csv_lines[1]}"
         finally:
             browser.close()
