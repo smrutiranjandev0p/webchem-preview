@@ -537,7 +537,7 @@ def test_full_backup_export_includes_study_tools_and_preferences():
             result = page.evaluate("""async () => {
               localStorage.setItem(learnerLocalKey('webchem-study-planner-v1'),JSON.stringify({day:'2026-11-02',minutes:45,goal:60}));
               localStorage.setItem(learnerLocalKey('webchem-flashcards-v1'),JSON.stringify({'What is pH?':3}));
-              localStorage.setItem('webchem-profile-details',JSON.stringify({name:'Chem Learner'}));
+              localStorage.setItem(learnerLocalKey('webchem-profile-details'),JSON.stringify({name:'Chem Learner'}));
               localStorage.setItem('webchem-settings',JSON.stringify({appLanguage:'English',quizLanguage:'Hindi'}));
               localStorage.setItem(learnerLocalKey('webchemQuizHistory'),JSON.stringify([{percent:90}]));
               localStorage.setItem(learnerLocalKey('webchemQuizMistakes'),JSON.stringify(['q-1']));
@@ -1156,7 +1156,7 @@ def test_study_planner_and_flashcards_are_account_scoped():
     """Personal planner and flashcard mastery data must not cross learner accounts."""
     source = Path("index.html").read_text(encoding="utf-8")
     assert "function learnerLocalKey(base)" in source
-    assert "const KEY=learnerLocalKey(learnerLocalKey('webchem-study-planner-v1'))" in source
-    assert "const KEY=learnerLocalKey(learnerLocalKey('webchem-flashcards-v1'))" in source
-    assert "readBackupValue(learnerLocalKey(learnerLocalKey('webchem-study-planner-v1')),{})" in source
-    assert "readBackupValue(learnerLocalKey(learnerLocalKey('webchem-flashcards-v1')),{})" in source
+    assert "const KEY=learnerLocalKey('webchem-study-planner-v1')" in source
+    assert "const KEY=learnerLocalKey('webchem-flashcards-v1')" in source
+    assert "readBackupValue(learnerLocalKey('webchem-study-planner-v1'),{})" in source
+    assert "readBackupValue(learnerLocalKey('webchem-flashcards-v1'),{})" in source
