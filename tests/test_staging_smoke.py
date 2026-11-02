@@ -392,13 +392,22 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
               t.state.completed=['account-before-logout'];
               localStorage.setItem(t.userStateKey(user),JSON.stringify(t.state));
               const originalFetch=window.fetch;
-              let resolveFetch;
-              window.fetch=()=>new Promise(resolve=>{resolveFetch=resolve});
+              let resolveFetch, fetchSignal=null;
+              // Model browser fetch cancellation: an aborted request rejects promptly.
+              window.fetch=(_url,options={})=>new Promise((resolve,reject)=>{
+                resolveFetch=resolve;
+                fetchSignal=options.signal||null;
+                if(fetchSignal){
+                  if(fetchSignal.aborted)reject(new DOMException('Aborted','AbortError'));
+                  else fetchSignal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true});
+                }
+              });
               const pending=t.syncProgressToCloud();
-              t.logout();
+              t.logout(); // Must abort the in-flight PUT and reset cloud flags.
               t.state.completed=['guest-after-save-logout'];
               t.save();
-              resolveFetch({ok:true,json:async()=>({success:true})});
+              // A simulated late success after abort must not affect the guest session.
+              if(resolveFetch)resolveFetch({ok:true,json:async()=>({success:true})});
               await pending;
               window.fetch=originalFetch;
               return {
@@ -407,12 +416,14 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
                 dirty:t.cloudDirty,
                 busy:t.cloudSyncBusy,
                 guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}').completed,
-                token:localStorage.getItem(t.AUTH_TOKEN_KEY)
+                token:localStorage.getItem(t.AUTH_TOKEN_KEY),
+                saveSignalAborted:!!(fetchSignal&&fetchSignal.aborted)
               };
             }""")
             assert result["currentUser"] is None, f"Logout session unexpectedly restored: {result}"
             assert result["ready"] is False and result["dirty"] is False, f"Old save altered guest cloud flags: {result}"
             assert result["busy"] is False, f"Cloud sync busy flag remained set after logout: {result}"
+            assert result["saveSignalAborted"] is True, f"Logout did not abort the pending cloud save: {result}"
             assert result["token"] is None, f"Auth token remained after logout: {result}"
             assert "guest-after-save-logout" in result["guest"], f"Guest progress missing: {result}"
             assert "account-before-logout" not in result["guest"], f"Account progress leaked to guest: {result}"
