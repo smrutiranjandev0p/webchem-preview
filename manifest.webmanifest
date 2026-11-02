@@ -9,7 +9,11 @@
   "theme_color": "#0b1118",
   "orientation": "any",
   "icons": [
-    {"src":"./icons/webchem-icon.svg","sizes":"any","type":"image/svg+xml"},
-    {"src":"./icons/webchem-icon.svg","sizes":"any","type":"image/svg+xml"}
+    {
+      "src": "./icons/webchem-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
