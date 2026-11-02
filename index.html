@@ -970,7 +970,7 @@ restoreAuth()}init();
  // Clarify the reused molarity input label for Normality mode.
  mode.addEventListener('change',()=>{const label=document.querySelector('label[for="tutorMoles"]');if(label)label.textContent=mode.value==='normality'?'Molarity (mol/L)':'Solute amount (mol)';});
  mode.dispatchEvent(new Event('change'));
-})();calc()})();
+})();calc();
 (function(){
  const x=document.createElement('div');x.id='tutorTitrationFields';x.hidden=true;
  x.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorEqMass">Sample mass (g)</label><input id="tutorEqMass" type="number" min="0" step="any" value="0.5"></div><div class="tutor-field"><label for="tutorEqWeight">Equivalent weight (g/eq)</label><input id="tutorEqWeight" type="number" min="0" step="any" value="50"></div></div><div class="tutor-field"><label for="tutorEqVol">Solution volume (L)</label><input id="tutorEqVol" type="number" min="0" step="any" value="0.25"></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorTitM">Titrant molarity (mol/L)</label><input id="tutorTitM" type="number" min="0" step="any" value="0.1"></div><div class="tutor-field"><label for="tutorTitV">Titrant volume (mL)</label><input id="tutorTitV" type="number" min="0" step="any" value="20"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorAnalyteV">Analyte volume (mL)</label><input id="tutorAnalyteV" type="number" min="0" step="any" value="25"></div><div class="tutor-field"><label for="tutorRatioA">Titrant coefficient (a)</label><input id="tutorRatioA" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorRatioB">Analyte coefficient (b)</label><input id="tutorRatioB" type="number" min="0" step="any" value="1"></div></div><p class="tutor-muted tutor-small">For a balanced reaction: a·titrant + b·analyte → products. Use coefficients from the balanced equation.</p>';
@@ -996,7 +996,7 @@ restoreAuth()}init();
   }
  };
  ['tutorEqMass','tutorEqWeight','tutorEqVol','tutorTitM','tutorTitV','tutorAnalyteV','tutorRatioA','tutorRatioB'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
-})();calc()})();
+})();calc();
 (function(){
  const ph=document.createElement('div');ph.id='tutorPHFields';ph.hidden=true;
  ph.innerHTML='<div class="tutor-field"><label for="tutorPHConc">Concentration (mol/L)</label><input id="tutorPHConc" type="number" min="0" step="any" value="0.001"></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorPHpKa">Buffer pKa</label><input id="tutorPHpKa" type="number" step="any" value="4.76"></div><div class="tutor-field"><label for="tutorPHBase">[A⁻] / [HA] ratio</label><input id="tutorPHBase" type="number" min="0" step="any" value="1"></div></div><p class="tutor-muted tutor-small">Use concentrations in mol/L. pH calculations assume ideal dilute solutions at 25°C; real activities and temperature can affect results.</p>';
