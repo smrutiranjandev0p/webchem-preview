@@ -102,6 +102,22 @@ def test_account_switch_isolation_with_mocked_cloud_api():
             assert "lesson-account-a" in result["a"].get("completed", []), f"Account A cloud data missing: {result}"
             assert "lesson-account-a" not in result["b"].get("completed", []), f"Account A cloud data leaked into B: {result}"
             assert "lesson-account-b" in result["b"].get("completed", []), f"Account B cloud data missing: {result}"
+
+            # Logout must clear auth and return to guest without leaking account B data.
+            logout_result = page.evaluate("""() => {
+              state.completed=['B-only-marker']; save();
+              logout();
+              return {
+                active:currentUser,
+                token:localStorage.getItem(AUTH_TOKEN_KEY),
+                guest:JSON.parse(localStorage.getItem(GUEST_STATE_KEY)||'{}'),
+                accountB:JSON.parse(localStorage.getItem(userStateKey({id:'account-B'}))||'{}')
+              };
+            }""")
+            assert logout_result["active"] is None, f"User remained authenticated after logout: {logout_result}"
+            assert logout_result["token"] is None, f"Auth token remained after logout: {logout_result}"
+            assert "B-only-marker" in logout_result["accountB"].get("completed", []), f"Account B progress not saved: {logout_result}"
+            assert "B-only-marker" not in logout_result["guest"].get("completed", []), f"Account B data leaked into guest state: {logout_result}"
             assert not errors, "Uncaught JS errors:\n" + "\n".join(errors)
         finally:
             browser.close()
