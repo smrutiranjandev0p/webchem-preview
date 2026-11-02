@@ -923,7 +923,7 @@ restoreAuth()}init();
    res.innerHTML='<strong>'+mgL.toPrecision(6)+' ppm (approx.)</strong><p>For dilute water with density near 1 kg/L: 1 mg/L ≈ 1 ppm. This approximation is not valid for every matrix.</p>';
   }
  };
- ['tutorMass','tutorMW','tutorNF','tutorPPM'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ ['tutorMass','tutorMW','tutorNF','tutorPPM','tutorMoles','tutorVolume'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
  // Clarify the reused molarity input label for Normality mode.
  mode.addEventListener('change',()=>{const label=document.querySelector('label[for="tutorMoles"]');if(label)label.textContent=mode.value==='normality'?'Molarity (mol/L)':'Solute amount (mol)';});
  mode.dispatchEvent(new Event('change'));
