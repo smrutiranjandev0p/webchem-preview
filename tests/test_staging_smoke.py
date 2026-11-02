@@ -535,12 +535,12 @@ def test_full_backup_export_includes_study_tools_and_preferences():
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(300)
             result = page.evaluate("""async () => {
-              localStorage.setItem('webchem-study-planner-v1',JSON.stringify({day:'2026-11-02',minutes:45,goal:60}));
-              localStorage.setItem('webchem-flashcards-v1',JSON.stringify({'What is pH?':3}));
+              localStorage.setItem(''+learnerLocalKey('webchem-study-planner-v1')+'',JSON.stringify({day:'2026-11-02',minutes:45,goal:60}));
+              localStorage.setItem(''+learnerLocalKey('webchem-flashcards-v1')+'',JSON.stringify({'What is pH?':3}));
               localStorage.setItem('webchem-profile-details',JSON.stringify({name:'Chem Learner'}));
               localStorage.setItem('webchem-settings',JSON.stringify({appLanguage:'English',quizLanguage:'Hindi'}));
-              localStorage.setItem('webchemQuizHistory',JSON.stringify([{percent:90}]));
-              localStorage.setItem('webchemQuizMistakes',JSON.stringify(['q-1']));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizHistory')+'',JSON.stringify([{percent:90}]));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizMistakes')+'',JSON.stringify(['q-1']));
               const oldCreate=URL.createObjectURL;
               URL.createObjectURL=blob=>{window.__backupBlob=blob;return 'blob:webchem-test'};
               const oldClick=HTMLAnchorElement.prototype.click;
@@ -582,16 +582,16 @@ def test_invalid_backup_does_not_destroy_existing_quiz_data():
             page.wait_for_timeout(300)
             result = page.evaluate("""async () => {
               const priorHistory=[{score:88}], priorMistakes=['keep-me'];
-              localStorage.setItem('webchemQuizHistory',JSON.stringify(priorHistory));
-              localStorage.setItem('webchemQuizMistakes',JSON.stringify(priorMistakes));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizHistory')+'',JSON.stringify(priorHistory));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizMistakes')+'',JSON.stringify(priorMistakes));
               const alerts=[]; window.alert=message=>alerts.push(String(message));
               window.confirm=()=>true;
               const file=new File([JSON.stringify({version:2,state:{completed:[]},quizHistory:'not-an-array'})],
                 'broken-backup.json',{type:'application/json'});
               importProgressBackup({files:[file],value:'broken-backup.json'});
               await new Promise(resolve=>setTimeout(resolve,80));
-              return {alerts,history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]'),
-                mistakes:JSON.parse(localStorage.getItem('webchemQuizMistakes')||'[]')};
+              return {alerts,history:JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizHistory')+'')||'[]'),
+                mistakes:JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizMistakes')+'')||'[]')};
             }""")
             assert any("Invalid quiz history" in msg for msg in result["alerts"]), f"Malformed backup was not rejected: {result}"
             assert result["history"] == [{"score": 88}], f"Existing quiz history was overwritten: {result}"
@@ -614,15 +614,15 @@ def test_legacy_backup_keeps_newer_local_study_data():
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(300)
             result = page.evaluate("""async () => {
-              localStorage.setItem('webchemQuizHistory',JSON.stringify([{score:91}]));
-              localStorage.setItem('webchemQuizMistakes',JSON.stringify(['old-local-mistake']));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizHistory')+'',JSON.stringify([{score:91}]));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizMistakes')+'',JSON.stringify(['old-local-mistake']));
               window.alert=()=>{}; window.confirm=()=>true;
               const file=new File([JSON.stringify({completed:['lesson-1'],points:5})],
                 'legacy-backup.json',{type:'application/json'});
               importProgressBackup({files:[file],value:'legacy-backup.json'});
               await new Promise(resolve=>setTimeout(resolve,80));
-              return {history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]'),
-                mistakes:JSON.parse(localStorage.getItem('webchemQuizMistakes')||'[]'),
+              return {history:JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizHistory')+'')||'[]'),
+                mistakes:JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizMistakes')+'')||'[]'),
                 completed:window.__WEBCHEM_TEST__.state.completed};
             }""")
             assert result["history"] and result["history"][0] == {"score": 91}, f"Legacy backup erased newer quiz history: {result}"
@@ -646,7 +646,7 @@ def test_backup_import_confirmation_shows_backup_summary_and_can_cancel():
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(300)
             result = page.evaluate("""async () => {
-              localStorage.setItem('webchemQuizHistory',JSON.stringify([{score:77}]));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizHistory')+'',JSON.stringify([{score:77}]));
               const prompts=[]; window.confirm=message=>{prompts.push(String(message));return false};
               window.alert=()=>{};
               const backup={version:2,exportedAt:'2026-11-02T12:00:00Z',
@@ -655,7 +655,7 @@ def test_backup_import_confirmation_shows_backup_summary_and_can_cancel():
               const file=new File([JSON.stringify(backup)],'backup.json',{type:'application/json'});
               importProgressBackup({files:[file],value:'backup.json'});
               await new Promise(resolve=>setTimeout(resolve,80));
-              return {prompt:prompts[0],history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]'),
+              return {prompt:prompts[0],history:JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizHistory')+'')||'[]'),
                 completed:window.__WEBCHEM_TEST__.state.completed};
             }""")
             for expected in ("Backup version: 2", "Quiz history: 1 records", "Quiz mistakes: 1 records", "studyPlanner"):
@@ -698,10 +698,10 @@ def test_full_backup_import_restores_all_v2_data():
               const read=k=>JSON.parse(localStorage.getItem(k)||'null');
               return {
                 state:window.__WEBCHEM_TEST__.state,
-                history:read('webchemQuizHistory'),
-                mistakes:read('webchemQuizMistakes'),
-                planner:read('webchem-study-planner-v1'),
-                flashcards:read('webchem-flashcards-v1'),
+                history:read(''+learnerLocalKey('webchemQuizHistory')+''),
+                mistakes:read(''+learnerLocalKey('webchemQuizMistakes')+''),
+                planner:read(''+learnerLocalKey('webchem-study-planner-v1')+''),
+                flashcards:read(''+learnerLocalKey('webchem-flashcards-v1')+''),
                 profile:read('webchem-profile-details'),
                 preferences:read('webchem-settings')
               };
@@ -735,14 +735,14 @@ def test_backup_import_rejects_unknown_future_version_without_changes():
             page.wait_for_timeout(300)
             result = page.evaluate("""async () => {
               const prior=window.__WEBCHEM_TEST__.state.completed.slice();
-              localStorage.setItem('webchemQuizHistory',JSON.stringify([{score:73}]));
+              localStorage.setItem(''+learnerLocalKey('webchemQuizHistory')+'',JSON.stringify([{score:73}]));
               const alerts=[]; window.alert=message=>alerts.push(String(message)); window.confirm=()=>true;
               const backup={version:3,state:{completed:['future-data']},quizHistory:[{score:100}]};
               const file=new File([JSON.stringify(backup)],'future-backup.json',{type:'application/json'});
               importProgressBackup({files:[file],value:'future-backup.json'});
               await new Promise(resolve=>setTimeout(resolve,80));
               return {alerts,prior,completed:window.__WEBCHEM_TEST__.state.completed,
-                history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]')};
+                history:JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizHistory')+'')||'[]')};
             }""")
             assert any("Unsupported backup version" in msg for msg in result["alerts"]), f"Future backup version was not rejected: {result}"
             assert "future-data" not in result["completed"], f"Future backup modified progress: {result}"
@@ -901,10 +901,10 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             try:
                 page.wait_for_selector(".quiz-result-panel", timeout=10_000)
             except Exception as exc:
-                snapshot = page.evaluate("""() => ({area:document.querySelector("#quizArea")?.innerText, history:localStorage.getItem("webchemQuizHistory"), state:window.state?JSON.stringify(window.state):"not-global"})""")
+                snapshot = page.evaluate("""() => ({area:document.querySelector("#quizArea")?.innerText, history:localStorage.getItem("'+learnerLocalKey('webchemQuizHistory')+'"), state:window.state?JSON.stringify(window.state):"not-global"})""")
                 raise AssertionError(f"CBT submit failed; browser errors={browser_errors}; page={snapshot}") from exc
             assert "Quiz complete!" in page.locator(".quiz-result-panel").inner_text()
-            history = page.evaluate("JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]')")
+            history = page.evaluate("JSON.parse(localStorage.getItem(''+learnerLocalKey('webchemQuizHistory')+'')||'[]')")
             assert history and history[-1]["mode"] == "cbt", f"CBT attempt not recorded: {history}"
             assert history[-1]["total"] == 10, f"Unexpected quiz total in history: {history[-1]}"
             assert history[-1]["correct"] + history[-1]["wrong"] == 1, f"One response should be scored: {history[-1]}"
@@ -1156,7 +1156,7 @@ def test_study_planner_and_flashcards_are_account_scoped():
     """Personal planner and flashcard mastery data must not cross learner accounts."""
     source = Path("index.html").read_text(encoding="utf-8")
     assert "function learnerLocalKey(base)" in source
-    assert "const KEY=learnerLocalKey('webchem-study-planner-v1')" in source
-    assert "const KEY=learnerLocalKey('webchem-flashcards-v1')" in source
-    assert "readBackupValue(learnerLocalKey('webchem-study-planner-v1'),{})" in source
-    assert "readBackupValue(learnerLocalKey('webchem-flashcards-v1'),{})" in source
+    assert "const KEY=learnerLocalKey(''+learnerLocalKey('webchem-study-planner-v1')+'')" in source
+    assert "const KEY=learnerLocalKey(''+learnerLocalKey('webchem-flashcards-v1')+'')" in source
+    assert "readBackupValue(learnerLocalKey(''+learnerLocalKey('webchem-study-planner-v1')+''),{})" in source
+    assert "readBackupValue(learnerLocalKey(''+learnerLocalKey('webchem-flashcards-v1')+''),{})" in source
