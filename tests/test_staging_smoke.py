@@ -138,16 +138,16 @@ def test_local_progress_survives_page_reload():
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(700)
-            page.evaluate("""() => {
-              state.completed=['reload-persistence-marker'];
-              save();
+            page.evaluate("""() => {const t=window.__WEBCHEM_TEST__;
+              t.state.completed=['reload-persistence-marker'];
+              t.save();
             }""")
             page.reload(wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(500)
-            result=page.evaluate("""() => ({
-              saved:JSON.parse(localStorage.getItem(GUEST_STATE_KEY)||'{}'),
-              loaded:state.completed
-            })""")
+            result=page.evaluate("""() => {const t=window.__WEBCHEM_TEST__; return {
+              saved:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}'),
+              loaded:t.state.completed
+            }}""")
             assert "reload-persistence-marker" in result["saved"].get("completed", []), f"Guest progress not persisted locally: {result}"
             assert "reload-persistence-marker" in result["loaded"], f"Guest progress not restored after refresh: {result}"
         finally:
