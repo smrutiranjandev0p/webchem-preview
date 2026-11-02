@@ -1123,3 +1123,12 @@ def test_service_worker_never_caches_account_or_api_responses():
     # Include both bare route roots (/auth, /api) and nested endpoints.
     assert "['/api','/auth','/progress']" in source
     assert "Never cache API/auth/progress responses" in source
+
+
+def test_profile_details_storage_is_account_scoped():
+    """Prevent guest/account profile details from being shared in local storage."""
+    source = Path("index.html").read_text(encoding="utf-8")
+    assert "const profileStore=()=>" in source
+    assert "webchem-profile-details-'+String(id).toLowerCase()" in source
+    assert "read(profileStore(),{})" in source
+    assert "localStorage.setItem(profileStore(),JSON.stringify(d))" in source
