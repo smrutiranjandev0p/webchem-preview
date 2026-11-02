@@ -150,3 +150,49 @@ def test_local_progress_survives_page_reload():
             assert "reload-persistence-marker" in result["loaded"], f"Guest progress not restored after refresh: {result}"
         finally:
             browser.close()
+
+
+def test_cloud_load_failure_preserves_local_progress_and_retries():
+    """A failed cloud read must not replace local progress; retries stay session-scoped."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        progress_get_calls = {"count": 0}
+
+        def api_mock(route):
+            url = route.request.url
+            if url.endswith("/api/auth/me"):
+                route.fulfill(status=401, content_type="application/json",
+                              body='{"success":false,"error":"Unauthenticated"}')
+            elif url.endswith("/api/progress") and route.request.method == "GET":
+                progress_get_calls["count"] += 1
+                route.fulfill(status=503, content_type="application/json",
+                              body='{"success":false,"error":"temporary outage"}')
+            else:
+                route.fulfill(status=200, content_type="application/json",
+                              body='{"success":true}')
+        page.route("**/api/**", api_mock)
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const user={id:'retry-user',username:'Retry User'};
+              localStorage.setItem(userStateKey(user),JSON.stringify({...defaultState,completed:['local-safe-marker']}));
+              localStorage.setItem(AUTH_TOKEN_KEY,'retry-token');
+              currentUser=user;
+              cloudSessionVersion++;
+              await loadCloudProgress(user,{mergeGuest:false});
+              return {
+                progress:state.completed,
+                stored:JSON.parse(localStorage.getItem(userStateKey(user))||'{}').completed,
+                ready:cloudReady,
+                dirty:cloudDirty
+              };
+            }""")
+            assert "local-safe-marker" in result["progress"], f"Local progress lost on cloud failure: {result}"
+            assert "local-safe-marker" in result["stored"], f"Stored local progress lost: {result}"
+            assert result["ready"] is False, f"Cloud should remain unready after failed load: {result}"
+            assert result["dirty"] is False, f"Failed cloud load should not mark data dirty: {result}"
+            assert progress_get_calls["count"] >= 1, "Cloud GET route was not called"
+        finally:
+            browser.close()
