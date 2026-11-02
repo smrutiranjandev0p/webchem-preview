@@ -1038,3 +1038,19 @@ def test_lesson_completion_awards_points_once_and_persists_after_reload():
             assert restored["guest"].get("points") == 10, f"Guest progress storage missing awarded points: {restored}"
         finally:
             browser.close()
+
+
+def test_quiz_question_bank_schema_and_unique_ids():
+    """Every curated quiz item must have valid fields, answer index, and a unique stable ID."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_selector("#authGate", timeout=15_000)
+            audit = page.evaluate("window.__WEBCHEM_TEST__.auditQuizQuestionBank()")
+            assert audit["total"] >= 100, f"Question library unexpectedly small: {audit}"
+            assert audit["invalidIndexes"] == [], f"Malformed question-bank entries at indexes: {audit['invalidIndexes']}"
+            assert audit["duplicateIds"] == [], f"Question IDs must be unique: {audit['duplicateIds']}"
+        finally:
+            browser.close()
