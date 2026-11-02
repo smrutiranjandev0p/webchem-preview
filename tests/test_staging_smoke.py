@@ -358,3 +358,56 @@ def test_stale_cloud_response_after_logout_is_ignored():
             assert "stale-cloud-marker" not in result["guest"], f"Old account data leaked into guest: {result}"
         finally:
             browser.close()
+
+
+def test_stale_cloud_save_response_after_logout_is_ignored():
+    """A late successful PUT must not alter the logged-out guest session."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const user={id:'pending-save-user',username:'Pending Save'};
+              localStorage.setItem(AUTH_TOKEN_KEY,'pending-save-token');
+              currentUser=user;
+              cloudReady=true;
+              cloudDirty=true;
+              cloudSyncBusy=false;
+              cloudSessionVersion++;
+              cloudStateVersion++;
+              state.completed=['account-before-logout'];
+              localStorage.setItem(userStateKey(user),JSON.stringify(state));
+              const originalFetch=window.fetch;
+              let resolveFetch;
+              window.fetch=()=>new Promise(resolve=>{resolveFetch=resolve});
+              const pending=syncProgressToCloud();
+              logout();
+              state.completed=['guest-after-save-logout'];
+              save();
+              resolveFetch({ok:true,json:async()=>({success:true})});
+              await pending;
+              window.fetch=originalFetch;
+              return {
+                currentUser,
+                ready:cloudReady,
+                dirty:cloudDirty,
+                busy:cloudSyncBusy,
+                guest:JSON.parse(localStorage.getItem(GUEST_STATE_KEY)||'{}').completed,
+                token:localStorage.getItem(AUTH_TOKEN_KEY)
+              };
+            }""")
+            assert result["currentUser"] is None, f"Logout session unexpectedly restored: {result}"
+            assert result["ready"] is False and result["dirty"] is False, f"Old save altered guest cloud flags: {result}"
+            assert result["busy"] is False, f"Cloud sync busy flag remained set after logout: {result}"
+            assert result["token"] is None, f"Auth token remained after logout: {result}"
+            assert "guest-after-save-logout" in result["guest"], f"Guest progress missing: {result}"
+            assert "account-before-logout" not in result["guest"], f"Account progress leaked to guest: {result}"
+        finally:
+            browser.close()
