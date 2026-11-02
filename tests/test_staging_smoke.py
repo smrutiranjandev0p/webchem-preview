@@ -890,7 +890,11 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             assert "Question 1 of" in page.locator(".quiz-run-head h3").inner_text()
 
             page.locator("#submitExam").click()
-            page.wait_for_selector(".quiz-result-panel", timeout=10_000)
+            try:
+                page.wait_for_selector(".quiz-result-panel", timeout=10_000)
+            except Exception as exc:
+                snapshot = page.evaluate("""() => ({area:document.querySelector("#quizArea")?.innerText, history:localStorage.getItem("webchemQuizHistory"), state:window.state?JSON.stringify(window.state):"not-global"})""")
+                raise AssertionError(f"CBT submit failed; browser errors={browser_errors}; page={snapshot}") from exc
             assert "Quiz complete!" in page.locator(".quiz-result-panel").inner_text()
             history = page.evaluate("JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]')")
             assert history and history[-1]["mode"] == "cbt", f"CBT attempt not recorded: {history}"
