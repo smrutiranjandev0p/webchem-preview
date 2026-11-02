@@ -751,40 +751,45 @@ def test_backup_import_rejects_unknown_future_version_without_changes():
             browser.close()
 
 def test_mobile_layout_has_no_page_level_horizontal_overflow():
-    """Check the auth-gated landing page at common phone widths; intentional periodic-table scrolling stays contained."""
+    """Check auth-gated layout on narrow phones, regular phones, and tablet widths."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 360, "height": 800}, device_scale_factor=1)
         errors = []
-        page.on("pageerror", lambda error: errors.append(str(error)))
-        page.route("**/api/**", lambda route: route.fulfill(
-            status=401 if route.request.url.endswith("/api/auth/me") else 200,
-            content_type="application/json",
-            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
-        ))
         try:
-            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
-            page.wait_for_selector("#authGate", timeout=15_000)
-            page.wait_for_timeout(500)
-            dimensions = page.evaluate("""() => ({
-              viewport: document.documentElement.clientWidth,
-              document: document.documentElement.scrollWidth,
-              body: document.body.scrollWidth,
-              gate: document.querySelector('#authGate')?.getBoundingClientRect().width
-            })""")
-            assert dimensions["document"] <= dimensions["viewport"] + 1, (
-                f"Mobile page causes horizontal overflow at 360px: {dimensions}"
-            )
-            assert dimensions["body"] <= dimensions["viewport"] + 1, (
-                f"Mobile body causes horizontal overflow at 360px: {dimensions}"
-            )
-            assert not errors, "Uncaught mobile JS errors:\\n" + "\\n".join(errors)
-        except Exception:
-            try:
-                page.screenshot(path=str(ARTIFACTS / "mobile-overflow-failure.png"), full_page=True)
-            except Exception:
-                pass
-            raise
+            for width, height in [(320, 720), (360, 800), (390, 844), (768, 1024)]:
+                page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=1)
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                page.route("**/api/**", lambda route: route.fulfill(
+                    status=401 if route.request.url.endswith("/api/auth/me") else 200,
+                    content_type="application/json",
+                    body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+                ))
+                try:
+                    page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+                    page.wait_for_selector("#authGate", timeout=15_000)
+                    page.wait_for_timeout(300)
+                    dimensions = page.evaluate("""() => ({
+                      viewport: document.documentElement.clientWidth,
+                      document: document.documentElement.scrollWidth,
+                      body: document.body.scrollWidth,
+                      gate: document.querySelector('#authGate')?.getBoundingClientRect().width
+                    })""")
+                    assert dimensions["document"] <= dimensions["viewport"] + 1, (
+                        f"Document horizontal overflow at {width}px: {dimensions}"
+                    )
+                    assert dimensions["body"] <= dimensions["viewport"] + 1, (
+                        f"Body horizontal overflow at {width}px: {dimensions}"
+                    )
+                    gate = page.locator("#authGate")
+                    assert gate.is_visible(), f"Auth gate is not visible at {width}px"
+                except Exception:
+                    try:
+                        page.screenshot(path=str(ARTIFACTS / f"mobile-overflow-{width}px.png"), full_page=True)
+                    except Exception:
+                        pass
+                    raise
+                finally:
+                    page.close()
+            assert not errors, "Uncaught responsive JS errors:\\n" + "\\n".join(errors)
         finally:
             browser.close()
-
