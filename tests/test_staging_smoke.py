@@ -21,8 +21,7 @@ def test_staging_branch_frontend_and_auth_gate():
             assert response.status == 200, f"Staging branch frontend HTTP {response.status}"
             assert "WebChem" in page.title(), f"Unexpected title: {page.title()}"
             page.wait_for_selector("#authGate", timeout=15_000)
-            if page.locator('#gateEmail').count() == 0 and page.locator('#authOpenBtn').count():
-                page.locator('#authOpenBtn').click()
+            # The login gate is intentionally modal on first load; its fields are already visible.
             page.wait_for_selector('#gateEmail', timeout=10_000)
             for selector in ("#gateEmail", "#gatePassword", "#gateSubmit"):
                 assert page.locator(selector).count() >= 1, f"Missing auth control: {selector}"
