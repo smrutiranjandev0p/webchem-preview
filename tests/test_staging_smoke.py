@@ -564,3 +564,69 @@ def test_full_backup_export_includes_study_tools_and_preferences():
             assert result["quizMistakes"] == ["q-1"], f"Quiz mistakes missing: {result}"
         finally:
             browser.close()
+
+
+
+def test_invalid_backup_does_not_destroy_existing_quiz_data():
+    """Malformed optional backup fields must be rejected without clearing local history."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(300)
+            result = page.evaluate("""async () => {
+              const priorHistory=[{score:88}], priorMistakes=['keep-me'];
+              localStorage.setItem('webchemQuizHistory',JSON.stringify(priorHistory));
+              localStorage.setItem('webchemQuizMistakes',JSON.stringify(priorMistakes));
+              const alerts=[]; window.alert=message=>alerts.push(String(message));
+              window.confirm=()=>true;
+              const file=new File([JSON.stringify({version:2,state:{completed:[]},quizHistory:'not-an-array'})],
+                'broken-backup.json',{type:'application/json'});
+              importProgressBackup({files:[file],value:'broken-backup.json'});
+              await new Promise(resolve=>setTimeout(resolve,80));
+              return {alerts,history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]'),
+                mistakes:JSON.parse(localStorage.getItem('webchemQuizMistakes')||'[]')};
+            }""")
+            assert any("Invalid quiz history" in msg for msg in result["alerts"]), f"Malformed backup was not rejected: {result}"
+            assert result["history"] == [{"score": 88}], f"Existing quiz history was overwritten: {result}"
+            assert result["mistakes"] == ["keep-me"], f"Existing quiz mistakes were overwritten: {result}"
+        finally:
+            browser.close()
+
+
+def test_legacy_backup_keeps_newer_local_study_data():
+    """Importing an older v1 backup should not erase data absent from that backup."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(300)
+            result = page.evaluate("""async () => {
+              localStorage.setItem('webchemQuizHistory',JSON.stringify([{score:91}]));
+              localStorage.setItem('webchemQuizMistakes',JSON.stringify(['old-local-mistake']));
+              window.alert=()=>{}; window.confirm=()=>true;
+              const file=new File([JSON.stringify({completed:['lesson-1'],points:5})],
+                'legacy-backup.json',{type:'application/json'});
+              importProgressBackup({files:[file],value:'legacy-backup.json'});
+              await new Promise(resolve=>setTimeout(resolve,80));
+              return {history:JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]'),
+                mistakes:JSON.parse(localStorage.getItem('webchemQuizMistakes')||'[]'),
+                completed:window.__WEBCHEM_TEST__.state.completed};
+            }""")
+            assert result["history"] == [{"score": 91}], f"Legacy backup erased newer quiz history: {result}"
+            assert result["mistakes"] == ["old-local-mistake"], f"Legacy backup erased newer mistakes: {result}"
+            assert "lesson-1" in result["completed"], f"Legacy core progress was not imported: {result}"
+        finally:
+            browser.close()
