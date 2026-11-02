@@ -395,13 +395,19 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
               let resolveFetch, fetchSignal=null, fetchStartedResolve;
               const fetchStarted=new Promise(resolve=>{fetchStartedResolve=resolve});
               // Model browser fetch cancellation: an aborted request rejects promptly.
-              window.fetch=(_url,options={})=>new Promise((resolve,reject)=>{
-                resolveFetch=resolve;
-                fetchSignal=options.signal||null;
-                fetchStartedResolve(); // Confirm the PUT reached fetch before logout.
-                if(fetchSignal){
-                  if(fetchSignal.aborted)reject(new DOMException('Aborted','AbortError'));
-                  else fetchSignal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true});
+              window.fetch=(url,options={})=>new Promise((resolve,reject)=>{
+                // Capture only the progress PUT under test. Logout/rendering may
+                // issue unrelated requests, which must not overwrite this signal.
+                if(String(url).endsWith('/api/progress')&&options.method==='PUT'){
+                  resolveFetch=resolve;
+                  fetchSignal=options.signal||null;
+                  fetchStartedResolve(); // Confirm the PUT reached fetch before logout.
+                  if(fetchSignal){
+                    if(fetchSignal.aborted)reject(new DOMException('Aborted','AbortError'));
+                    else fetchSignal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true});
+                  }
+                }else{
+                  resolve({ok:true,json:async()=>({success:true})});
                 }
               });
               const pending=t.syncProgressToCloud();
