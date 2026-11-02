@@ -309,3 +309,52 @@ def test_cloud_load_recovers_after_network_returns():
             assert get_calls["count"] >= 2, f"Expected failed then successful GET, got {get_calls}"
         finally:
             browser.close()
+
+
+def test_stale_cloud_response_after_logout_is_ignored():
+    """A delayed cloud response must not repopulate state after logout."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true,"progress":{}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const user={id:'stale-response-user',username:'Stale Response'};
+              localStorage.setItem(AUTH_TOKEN_KEY,'stale-token');
+              currentUser=user;
+              cloudReady=false;
+              cloudDirty=false;
+              cloudSessionVersion++;
+              const originalFetch=window.fetch;
+              let resolveFetch;
+              window.fetch=()=>new Promise(resolve=>{resolveFetch=resolve});
+              const pending=loadCloudProgress(user,{mergeGuest:false});
+              // Logout changes the session version before the old response arrives.
+              logout();
+              state.completed=['guest-after-logout'];
+              save();
+              resolveFetch({ok:true,json:async()=>({success:true,progress:{completed:['stale-cloud-marker']}})});
+              await pending;
+              window.fetch=originalFetch;
+              return {
+                currentUser,
+                ready:cloudReady,
+                dirty:cloudDirty,
+                guest:JSON.parse(localStorage.getItem(GUEST_STATE_KEY)||'{}').completed,
+                token:localStorage.getItem(AUTH_TOKEN_KEY)
+              };
+            }""")
+            assert result["currentUser"] is None, f"Logout session was unexpectedly restored: {result}"
+            assert result["ready"] is False, f"Stale response changed cloud readiness: {result}"
+            assert result["dirty"] is False, f"Stale response changed cloud dirty state: {result}"
+            assert result["token"] is None, f"Logout token was restored: {result}"
+            assert "guest-after-logout" in result["guest"], f"Guest progress was lost: {result}"
+            assert "stale-cloud-marker" not in result["guest"], f"Old account data leaked into guest: {result}"
+        finally:
+            browser.close()
