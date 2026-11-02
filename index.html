@@ -478,6 +478,7 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
       <option value="gcv">Coal GCV (bomb calorimeter)</option>
       <option value="proximate">Coal proximate analysis (%)</option>
       <option value="ultimate">Coal ultimate analysis (oxygen by difference)</option>
+      <option value="dose">Water-treatment chemical dosing</option>
     </select>
   </div>
 
@@ -1087,6 +1088,22 @@ restoreAuth()}init();
   res.innerHTML='<strong>Oxygen '+(o===null?'by difference':'(entered)')+' = '+oxygen.toFixed(2)+'%</strong><p>O (%) = 100 − C − H − N − S − ash − moisture</p><p class="tutor-muted tutor-small">Use only when all listed components are on the same basis. Depending on the standard, oxygen by difference may use a different basis or additional components; this generic calculation is a screening aid, not a report-ready standard method.</p>';
  };
  ['tutorCoalMoisture','tutorCoalAsh','tutorCoalVM','tutorCoalC','tutorCoalH','tutorCoalN','tutorCoalS','tutorCoalO'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ mode.addEventListener('change',calc);calc();
+})();
+(function(){
+ const panel=document.createElement('div');panel.id='tutorDoseFields';panel.hidden=true;
+ panel.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorDoseTarget">Required chemical dose (mg/L)</label><input id="tutorDoseTarget" type="number" min="0" step="any" value="25"></div><div class="tutor-field"><label for="tutorDoseFlow">Plant flow (m³/day)</label><input id="tutorDoseFlow" type="number" min="0" step="any" value="1000"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorDoseStrength">Solution strength (wt %)</label><input id="tutorDoseStrength" type="number" min="0" max="100" step="any" value="10"></div><div class="tutor-field"><label for="tutorDoseDensity">Solution density (kg/L)</label><input id="tutorDoseDensity" type="number" min="0" step="any" value="1.1"></div></div><p class="tutor-muted tutor-small">Enter dose as active chemical mg/L, plant flow in m³/day, and solution weight fraction/density from the product data or site SOP.</p>';
+ document.getElementById('tutorCoalAnalysisFields').after(panel);
+ const prev=calc;
+ calc=function(){
+  const active=mode.value==='dose';panel.hidden=!active;
+  if(!active){prev();return}
+  const dose=Number(document.getElementById('tutorDoseTarget').value),flow=Number(document.getElementById('tutorDoseFlow').value),strength=Number(document.getElementById('tutorDoseStrength').value),density=Number(document.getElementById('tutorDoseDensity').value);
+  if(![dose,flow,strength,density].every(Number.isFinite)||dose<0||flow<0||strength<=0||strength>100||density<=0){res.innerHTML='<strong>Check inputs</strong><p>Dose and flow must be non-negative; solution strength must be 0–100% (greater than zero); density must be positive.</p>';return}
+  const kg=dose*flow/1000, liters=kg/(density*strength/100);
+  res.innerHTML='<strong>Active chemical required = '+kg.toFixed(3)+' kg/day</strong><p>Mass = dose (mg/L) × flow (m³/day) ÷ 1000</p><p>Required solution ≈ '+liters.toFixed(3)+' L/day</p><p>Solution volume = active chemical mass ÷ [density × (wt%/100)]</p><p class="tutor-muted tutor-small">Assumes dose is expressed as active chemical and solution strength is mass fraction. Verify product concentration, density, process demand and plant operating conditions before applying.</p>';
+ };
+ ['tutorDoseTarget','tutorDoseFlow','tutorDoseStrength','tutorDoseDensity'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
  mode.addEventListener('change',calc);calc();
 })();
 (function(){
