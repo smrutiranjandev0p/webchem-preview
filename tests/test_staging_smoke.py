@@ -60,11 +60,11 @@ def test_account_switch_isolation_with_mocked_cloud_api():
         page = browser.new_page()
         page.on("pageerror", lambda error: errors.append(str(error)))
 
-        async def mock_api(route):
+        def mock_api(route):
             req = route.request
             url = req.url
             if url.endswith("/api/auth/me"):
-                await route.fulfill(status=401, content_type="application/json",
+                route.fulfill(status=401, content_type="application/json",
                                     body='{"success":false,"error":"Unauthenticated"}')
             elif url.endswith("/api/health"):
                 await route.fulfill(status=200, content_type="application/json",
@@ -78,12 +78,12 @@ def test_account_switch_isolation_with_mocked_cloud_api():
                 await route.fulfill(status=200, content_type="application/json", body='{"success":true}')
             else:
                 await route.fulfill(status=200, content_type="application/json", body='{"success":true}')
-        await page.route("**/api/**", mock_api)
+        page.route("**/api/**", mock_api)
         try:
-            await page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             # Let startup auth restore settle before simulating authenticated sessions.
-            await page.wait_for_timeout(500)
-            await page.evaluate("""async () => {
+            page.wait_for_timeout(500)
+            page.evaluate("""async () => {
               await gateSuccess({token:'token-A', user:{id:'account-A', username:'Account A'}});
               state.completed=['A-only-marker']; save();
               await gateSuccess({token:'token-B', user:{id:'account-B', username:'Account B'}});
@@ -103,4 +103,4 @@ def test_account_switch_isolation_with_mocked_cloud_api():
             assert "lesson-account-b" in result["b"].get("completed", []), f"Account B cloud data missing: {result}"
             assert not errors, "Uncaught JS errors:\n" + "\n".join(errors)
         finally:
-            await browser.close()
+            browser.close()
