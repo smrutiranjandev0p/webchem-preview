@@ -87,16 +87,17 @@ def test_account_switch_isolation_with_mocked_cloud_api():
               await gateSuccess({token:'token-A', user:{id:'account-A', username:'Account A'}});
               state.completed=['A-only-marker']; save();
               await gateSuccess({token:'token-B', user:{id:'account-B', username:'Account B'}});
-              const a=JSON.parse(localStorage.getItem('webchem-state-user-account-a')||'{}');
-              const b=JSON.parse(localStorage.getItem('webchem-state-user-account-b')||'{}');
-              return {a,b,active:currentUser&&currentUser.id,legacy:localStorage.getItem(LEGACY_STATE_KEY)};
+              const keyA=userStateKey({id:'account-A'}), keyB=userStateKey({id:'account-B'});
+              return {keyA,keyB,active:currentUser&&currentUser.id};
             }""")
             result = page.evaluate("""() => ({
-              a:JSON.parse(localStorage.getItem('webchem-state-user-account-a')||'{}'),
-              b:JSON.parse(localStorage.getItem('webchem-state-user-account-b')||'{}'),
+              aKey:userStateKey({id:'account-A'}), bKey:userStateKey({id:'account-B'}),
+              a:JSON.parse(localStorage.getItem(userStateKey({id:'account-A'}))||'{}'),
+              b:JSON.parse(localStorage.getItem(userStateKey({id:'account-B'}))||'{}'),
               active:currentUser&&currentUser.id
             })""")
             assert result["active"] == "account-B", f"Expected account B active: {result}"
+            assert result['aKey'].endswith('account_a') and result['bKey'].endswith('account_b'), f"Unexpected account storage keys: {result}"
             assert "A-only-marker" in result["a"].get("completed", []), f"Account A progress not stored separately: {result}"
             assert "lesson-account-a" in result["a"].get("completed", []), f"Account A cloud data missing: {result}"
             assert "lesson-account-a" not in result["b"].get("completed", []), f"Account A cloud data leaked into B: {result}"
