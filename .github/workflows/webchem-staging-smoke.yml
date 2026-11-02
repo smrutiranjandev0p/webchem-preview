@@ -49,7 +49,7 @@ jobs:
           node - <<'NODE'
           const fs=require('fs'), acorn=require('acorn');
           const s=fs.readFileSync('/tmp/webchem-inline-0.js','utf8');
-          const tok=acorn.tokenizer(s,{ecmaVersion:'latest',allowAwaitOutsideFunction:true});
+          const tok=acorn.tokenizer(s,{ecmaVersion:'latest',allowAwaitOutsideFunction:true,locations:true});
           const stack=[], pairs={')':'(',']':'[','}':'{' }; let t;
           while((t=tok.getToken()).type.label!=='eof') {
             const z=t.type.label;
