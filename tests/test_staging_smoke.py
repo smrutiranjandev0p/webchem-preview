@@ -912,7 +912,7 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
                 export_button.click()
             download = download_info.value
             csv_bytes = download.path().read_bytes()
-            assert csv_bytes.startswith(b"\\xef\\xbb\\xbf"), "CSV should include UTF-8 BOM for spreadsheet compatibility"
+            assert csv_bytes.startswith(b"\xef\xbb\xbf"), "CSV should include UTF-8 BOM for spreadsheet compatibility"
             csv_text = csv_bytes.decode("utf-8-sig")
             csv_lines = csv_text.splitlines()
             assert csv_lines[0] == "Date,Topic,Mode,Percent,Correct,Wrong,Unanswered,Total"
