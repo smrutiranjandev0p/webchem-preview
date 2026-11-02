@@ -519,3 +519,48 @@ def test_pending_account_a_save_cannot_mutate_account_b_after_switch():
             assert final["busy"] is False, f"Late account A save altered B sync state: {result}"
         finally:
             browser.close()
+
+
+def test_full_backup_export_includes_study_tools_and_preferences():
+    """Export should preserve progress plus locally stored study tools/profile preferences."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(300)
+            result = page.evaluate("""async () => {
+              localStorage.setItem('webchem-study-planner-v1',JSON.stringify({day:'2026-11-02',minutes:45,goal:60}));
+              localStorage.setItem('webchem-flashcards-v1',JSON.stringify({'What is pH?':3}));
+              localStorage.setItem('webchem-profile-details',JSON.stringify({name:'Chem Learner'}));
+              localStorage.setItem('webchem-settings',JSON.stringify({appLanguage:'English',quizLanguage:'Hindi'}));
+              localStorage.setItem('webchemQuizHistory',JSON.stringify([{percent:90}]));
+              localStorage.setItem('webchemQuizMistakes',JSON.stringify(['q-1']));
+              const oldCreate=URL.createObjectURL;
+              URL.createObjectURL=blob=>{window.__backupBlob=blob;return 'blob:webchem-test'};
+              const oldClick=HTMLAnchorElement.prototype.click;
+              HTMLAnchorElement.prototype.click=function(){};
+              try{
+                exportProgress();
+                const raw=await window.__backupBlob.text();
+                return JSON.parse(raw);
+              }finally{
+                URL.createObjectURL=oldCreate;
+                HTMLAnchorElement.prototype.click=oldClick;
+              }
+            }""")
+            assert result["version"] == 2, f"Expected version 2 full backup: {result}"
+            assert result["state"], f"Core progress missing from backup: {result}"
+            assert result["studyPlanner"]["minutes"] == 45, f"Study planner data missing: {result}"
+            assert "What is pH?" in result["flashcards"], f"Flashcard recall data missing: {result}"
+            assert result["profile"]["name"] == "Chem Learner", f"Profile data missing: {result}"
+            assert result["preferences"]["quizLanguage"] == "Hindi", f"Preferences missing: {result}"
+            assert result["quizHistory"][0]["percent"] == 90, f"Quiz history missing: {result}"
+            assert result["quizMistakes"] == ["q-1"], f"Quiz mistakes missing: {result}"
+        finally:
+            browser.close()
