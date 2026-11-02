@@ -809,6 +809,13 @@ def test_mobile_navigation_drawer_opens_and_closes_accessibly():
             trigger = page.locator("#menuTrigger")
             scrim = page.locator("#drawerScrim")
             page.wait_for_selector("#authGate", timeout=15_000)
+            # The auth gate is a modal overlay; simulate a successful test login
+            # so it no longer intercepts the navigation button's pointer events.
+            page.evaluate("""async () => {
+              const t = window.__WEBCHEM_TEST__;
+              await t.gateSuccess({token:'drawer-test-token', user:{id:'drawer-test-user', username:'Drawer Test'}});
+            }""")
+            page.wait_for_function("!document.querySelector('#authGate') || getComputedStyle(document.querySelector('#authGate')).display === 'none' || document.querySelector('#authGate').hidden", timeout=10_000)
             assert trigger.is_visible(), "Mobile navigation trigger should be visible"
             assert trigger.get_attribute("aria-expanded") == "false"
 
