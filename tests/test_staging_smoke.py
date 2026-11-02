@@ -869,7 +869,11 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             # start and submit confirmations are accepted without dialog races.
             page.evaluate("window.confirm = () => true")
             page.locator("#startQuizBtn").click()
-            page.wait_for_selector(".quizq", timeout=10_000)
+            try:
+                page.wait_for_selector(".quizq", timeout=10_000)
+            except Exception as exc:
+                snapshot = page.evaluate("""() => ({area:document.querySelector("#quizArea")?.innerText, topic:document.querySelector("#quizTopic")?.value, mode:document.querySelector("#quizMode")?.value, button:document.querySelector("#startQuizBtn")?.outerHTML})""")
+                raise AssertionError(f"CBT did not start; browser errors={browser_errors}; page={snapshot}") from exc
 
             # Answer then clear: clearing must return the question to unanswered.
             page.locator("[data-answer]").first.click()
