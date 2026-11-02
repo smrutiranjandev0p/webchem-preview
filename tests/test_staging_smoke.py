@@ -21,6 +21,9 @@ def test_staging_branch_frontend_and_auth_gate():
             assert response.status == 200, f"Staging branch frontend HTTP {response.status}"
             assert "WebChem" in page.title(), f"Unexpected title: {page.title()}"
             page.wait_for_selector("#authGate", timeout=15_000)
+            if page.locator('#gateEmail').count() == 0 and page.locator('#authOpenBtn').count():
+                page.locator('#authOpenBtn').click()
+            page.wait_for_selector('#gateEmail', timeout=10_000)
             for selector in ("#gateEmail", "#gatePassword", "#gateSubmit"):
                 assert page.locator(selector).count() >= 1, f"Missing auth control: {selector}"
             page.wait_for_timeout(1200)
@@ -83,7 +86,7 @@ def test_account_switch_isolation_with_mocked_cloud_api():
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             # Let startup auth restore settle before simulating authenticated sessions.
             page.wait_for_timeout(500)
-            page.evaluate("""async () => {
+            page.evaluate("""async () => {const {state,currentUser,cloudReady,cloudDirty,cloudSyncBusy,cloudSessionVersion,cloudStateVersion,defaultState,AUTH_TOKEN_KEY,GUEST_STATE_KEY,userStateKey,gateSuccess,loadCloudProgress,syncProgressToCloud,logout,save}=window.__WEBCHEM_TEST__;
               await gateSuccess({token:'token-A', user:{id:'account-A', username:'Account A'}});
               state.completed=['A-only-marker']; save();
               await gateSuccess({token:'token-B', user:{id:'account-B', username:'Account B'}});
@@ -175,7 +178,7 @@ def test_cloud_load_failure_preserves_local_progress_and_retries():
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
-            result = page.evaluate("""async () => {
+            result = page.evaluate("""async () => {const {state,currentUser,cloudReady,cloudDirty,cloudSyncBusy,cloudSessionVersion,cloudStateVersion,defaultState,AUTH_TOKEN_KEY,GUEST_STATE_KEY,userStateKey,gateSuccess,loadCloudProgress,syncProgressToCloud,logout,save}=window.__WEBCHEM_TEST__;
               const user={id:'retry-user',username:'Retry User'};
               localStorage.setItem(userStateKey(user),JSON.stringify({...defaultState,completed:['local-safe-marker']}));
               localStorage.setItem(AUTH_TOKEN_KEY,'retry-token');
@@ -228,7 +231,7 @@ def test_cloud_save_failure_keeps_dirty_and_recovers_on_retry():
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
-            result = page.evaluate("""async () => {
+            result = page.evaluate("""async () => {const {state,currentUser,cloudReady,cloudDirty,cloudSyncBusy,cloudSessionVersion,cloudStateVersion,defaultState,AUTH_TOKEN_KEY,GUEST_STATE_KEY,userStateKey,gateSuccess,loadCloudProgress,syncProgressToCloud,logout,save}=window.__WEBCHEM_TEST__;
               const user={id:'save-retry-user',username:'Save Retry User'};
               await gateSuccess({token:'save-retry-token',user});
               await loadCloudProgress(user,{mergeGuest:false});
@@ -285,7 +288,7 @@ def test_cloud_load_recovers_after_network_returns():
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
-            result = page.evaluate("""async () => {
+            result = page.evaluate("""async () => {const {state,currentUser,cloudReady,cloudDirty,cloudSyncBusy,cloudSessionVersion,cloudStateVersion,defaultState,AUTH_TOKEN_KEY,GUEST_STATE_KEY,userStateKey,gateSuccess,loadCloudProgress,syncProgressToCloud,logout,save}=window.__WEBCHEM_TEST__;
               const user={id:'network-recovery-user',username:'Network Recovery'};
               await gateSuccess({token:'network-recovery-token',user});
               const key=userStateKey(user);
@@ -324,7 +327,7 @@ def test_stale_cloud_response_after_logout_is_ignored():
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
-            result = page.evaluate("""async () => {
+            result = page.evaluate("""async () => {const {state,currentUser,cloudReady,cloudDirty,cloudSyncBusy,cloudSessionVersion,cloudStateVersion,defaultState,AUTH_TOKEN_KEY,GUEST_STATE_KEY,userStateKey,gateSuccess,loadCloudProgress,syncProgressToCloud,logout,save}=window.__WEBCHEM_TEST__;
               const user={id:'stale-response-user',username:'Stale Response'};
               localStorage.setItem(AUTH_TOKEN_KEY,'stale-token');
               currentUser=user;
@@ -373,7 +376,7 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
-            result = page.evaluate("""async () => {
+            result = page.evaluate("""async () => {const {state,currentUser,cloudReady,cloudDirty,cloudSyncBusy,cloudSessionVersion,cloudStateVersion,defaultState,AUTH_TOKEN_KEY,GUEST_STATE_KEY,userStateKey,gateSuccess,loadCloudProgress,syncProgressToCloud,logout,save}=window.__WEBCHEM_TEST__;
               const user={id:'pending-save-user',username:'Pending Save'};
               localStorage.setItem(AUTH_TOKEN_KEY,'pending-save-token');
               currentUser=user;
