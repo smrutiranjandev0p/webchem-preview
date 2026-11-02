@@ -888,6 +888,9 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             assert "Question 2 of" in page.locator(".quiz-run-head h3").inner_text()
             page.locator('[data-jump="0"]').click()
             assert "Question 1 of" in page.locator(".quiz-run-head h3").inner_text()
+            # Re-answer Q1 before submitting to verify score and unanswered counts.
+            page.locator("[data-answer]").first.click()
+            assert page.locator(".quiz-palette-btn.answered").count() == 1
 
             page.locator("#submitExam").click()
             try:
@@ -899,5 +902,10 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             history = page.evaluate("JSON.parse(localStorage.getItem('webchemQuizHistory')||'[]')")
             assert history and history[-1]["mode"] == "cbt", f"CBT attempt not recorded: {history}"
             assert history[-1]["total"] == 10, f"Unexpected quiz total in history: {history[-1]}"
+            assert history[-1]["correct"] + history[-1]["wrong"] == 1, f"One response should be scored: {history[-1]}"
+            assert history[-1]["unanswered"] == 9, f"Expected nine unanswered questions: {history[-1]}"
+            assert 0 <= history[-1]["percent"] <= 100, f"Invalid CBT percentage: {history[-1]}"
+            assert page.locator(".quiz-review-row").count() == 10, "Result should show one review row per question"
+            assert page.get_by_role("button", name="Export result (CSV)").is_visible()
         finally:
             browser.close()
