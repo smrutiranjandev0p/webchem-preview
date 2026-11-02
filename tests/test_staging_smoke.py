@@ -794,7 +794,7 @@ def test_mobile_layout_has_no_page_level_horizontal_overflow():
         finally:
             browser.close()
 
-def test_mobile_navigation_drawer_opens_and_closes_accessibly():
+async def test_mobile_navigation_drawer_opens_and_closes_accessibly():
     """Mobile menu must toggle state, expose ARIA state, and close via Escape/scrim."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
