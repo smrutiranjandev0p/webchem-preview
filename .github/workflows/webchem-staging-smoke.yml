@@ -1,0 +1,26 @@
+name: WebChem Staging Browser Smoke
+
+on:
+  push:
+    branches:
+      - staging-cloud-account-isolation
+  workflow_dispatch:
+
+jobs:
+  staging-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest playwright
+          python -m playwright install --with-deps chromium
+      - name: Run staging smoke tests
+        env:
+          WEBCHEM_STAGING_URL: https://beneficial-balance-staging.up.railway.app
+        run: pytest -q tests/test_staging_smoke.py
