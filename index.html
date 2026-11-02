@@ -474,6 +474,7 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
       <option value="hardness">Total hardness (EDTA titration)</option>
       <option value="chloride">Chloride (Mohr titration)</option>
       <option value="alkalinity">Alkalinity as CaCO₃</option>
+      <option value="do">Dissolved oxygen (Winkler titration)</option>
     </select>
   </div>
 
@@ -1008,7 +1009,7 @@ restoreAuth()}init();
  document.getElementById('tutorPHFields').after(w);
  const prev=calc;
  calc=function(){
-  const t=mode.value, water=['tds','hardness','chloride','alkalinity'].includes(t);
+  const t=mode.value, water=['tds','hardness','chloride','alkalinity','do'].includes(t);
   ['tutorMolarityFields','tutorDilutionFields','tutorExtraFields','tutorTitrationFields','tutorPHFields'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=water||!el.hidden;});
   // Set explicit visibility for every pre-existing mode panel, avoiding nested wrapper state drift.
   document.getElementById('tutorMolarityFields').hidden=water||!['molarity'].includes(t);
@@ -1025,12 +1026,16 @@ restoreAuth()}init();
   }
   if(![sample,vol,conc,blank].every(Number.isFinite)||sample<=0||vol<0||conc<0||blank<0||blank>vol){res.innerHTML='<strong>Check inputs</strong><p>Sample volume must be positive; titrant, blank and concentration non-negative; blank cannot exceed titrant volume.</p>';return}
   if(t==='hardness'){
-   const mgL=(vol-blank)*conc*100090/sample;
-   res.innerHTML='<strong>Total hardness = '+mgL.toFixed(3)+' mg/L as CaCO₃</strong><p>Hardness = (V_EDTA − V_blank) × M_EDTA × 100090 / V_sample</p><p>= ('+vol+' − '+blank+') × '+conc+' × 100090 / '+sample+'</p><p class="tutor-muted tutor-small">Assumes 1:1 EDTA-metal stoichiometry and EDTA molarity. Verify pH, indicator and endpoint per method.</p>';return
+   const mgL=(vol-blank)*conc*100000/sample;
+   res.innerHTML='<strong>Total hardness = '+mgL.toFixed(3)+' mg/L as CaCO₃</strong><p>Hardness = (V_EDTA − V_blank) × M_EDTA × 100000 / V_sample</p><p>= ('+vol+' − '+blank+') × '+conc+' × 100090 / '+sample+'</p><p class="tutor-muted tutor-small">Assumes 1:1 EDTA-metal stoichiometry and EDTA molarity. Verify pH, indicator and endpoint per method.</p>';return
+  }
+  if(t==='do'){
+   const mgL=(vol-blank)*conc*8000/sample;
+   res.innerHTML='<strong>Dissolved oxygen = '+mgL.toFixed(3)+' mg/L</strong><p>DO = (V_thiosulfate − V_blank) × N_thiosulfate × 8000 / V_sample</p><p class="tutor-muted tutor-small">Winkler titration calculation. Enter sodium thiosulfate normality; account for any dilution or reagent/sample-volume correction required by your method.</p>';return
   }
   if(t==='chloride'){
-   const mgL=(vol-blank)*conc*35453/sample;
-   res.innerHTML='<strong>Chloride = '+mgL.toFixed(3)+' mg/L</strong><p>Cl⁻ = (V_AgNO₃ − V_blank) × M_AgNO₃ × 35453 / V_sample</p><p class="tutor-muted tutor-small">Mohr method calculation. Use AgNO₃ molarity and a validated blank; pH and endpoint conditions matter.</p>';return
+   const mgL=(vol-blank)*conc*35450/sample;
+   res.innerHTML='<strong>Chloride = '+mgL.toFixed(3)+' mg/L</strong><p>Cl⁻ = (V_AgNO₃ − V_blank) × M_AgNO₃ × 35450 / V_sample</p><p class="tutor-muted tutor-small">Mohr method calculation. Use AgNO₃ molarity and a validated blank; pH and endpoint conditions matter.</p>';return
   }
   const alkalinity=(vol-blank)*conc*50000/sample;
   res.innerHTML='<strong>Alkalinity = '+alkalinity.toFixed(3)+' mg/L as CaCO₃</strong><p>Alkalinity = (V_acid − V_blank) × N_acid × 50000 / V_sample</p><p class="tutor-muted tutor-small">Use acid normality (not molarity unless the acid’s n-factor is accounted for) and the selected endpoint.</p>';
