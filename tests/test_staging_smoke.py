@@ -664,3 +664,56 @@ def test_backup_import_confirmation_shows_backup_summary_and_can_cancel():
             assert "new-lesson" not in result["completed"], f"Cancelled import changed progress: {result}"
         finally:
             browser.close()
+
+
+
+def test_full_backup_import_restores_all_v2_data():
+    """A valid v2 backup should restore core progress and each included study dataset."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(300)
+            result = page.evaluate("""async () => {
+              const backup={
+                version:2, exportedAt:'2026-11-02T12:00:00Z',
+                state:{completed:['backup-lesson'],points:125,correct:8,calculations:4},
+                quizHistory:[{topic:'Stoichiometry',percent:95,correct:19,total:20}],
+                quizMistakes:['missed-q-3'],
+                studyPlanner:{day:'2026-11-02',minutes:35,goal:50},
+                flashcards:{'What is molarity?':2},
+                profile:{name:'Backup Learner'},
+                preferences:{quizLanguage:'Hindi',appLanguage:'English'}
+              };
+              window.confirm=()=>true; window.alert=()=>{};
+              const file=new File([JSON.stringify(backup)],'complete-backup.json',{type:'application/json'});
+              importProgressBackup({files:[file],value:'complete-backup.json'});
+              await new Promise(resolve=>setTimeout(resolve,100));
+              const read=k=>JSON.parse(localStorage.getItem(k)||'null');
+              return {
+                state:window.__WEBCHEM_TEST__.state,
+                history:read('webchemQuizHistory'),
+                mistakes:read('webchemQuizMistakes'),
+                planner:read('webchem-study-planner-v1'),
+                flashcards:read('webchem-flashcards-v1'),
+                profile:read('webchem-profile-details'),
+                preferences:read('webchem-settings')
+              };
+            }""")
+            assert "backup-lesson" in result["state"]["completed"], f"Core progress not restored: {result}"
+            assert result["state"]["points"] == 125, f"Progress points not restored: {result}"
+            assert any(x.get("topic") == "Stoichiometry" and x.get("percent") == 95
+                       for x in result["history"]), f"Quiz history not restored: {result}"
+            assert result["mistakes"] == ["missed-q-3"], f"Quiz mistakes not restored: {result}"
+            assert result["planner"]["minutes"] == 35, f"Study planner not restored: {result}"
+            assert result["flashcards"]["What is molarity?"] == 2, f"Flashcards not restored: {result}"
+            assert result["profile"]["name"] == "Backup Learner", f"Profile not restored: {result}"
+            assert result["preferences"]["quizLanguage"] == "Hindi", f"Preferences not restored: {result}"
+        finally:
+            browser.close()
