@@ -97,7 +97,7 @@ def test_account_switch_isolation_with_mocked_cloud_api():
               active:currentUser&&currentUser.id
             })""")
             assert result["active"] == "account-B", f"Expected account B active: {result}"
-            assert result['aKey'].endswith('account_a') and result['bKey'].endswith('account_b'), f"Unexpected account storage keys: {result}"
+            assert result['aKey'].endswith('account-a') and result['bKey'].endswith('account-b'), f"Unexpected account storage keys: {result}"
             assert "A-only-marker" in result["a"].get("completed", []), f"Account A progress not stored separately: {result}"
             assert "lesson-account-a" in result["a"].get("completed", []), f"Account A cloud data missing: {result}"
             assert "lesson-account-a" not in result["b"].get("completed", []), f"Account A cloud data leaked into B: {result}"
