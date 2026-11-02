@@ -476,6 +476,8 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
       <option value="alkalinity">Alkalinity as CaCO₃</option>
       <option value="do">Dissolved oxygen (Winkler titration)</option>
       <option value="gcv">Coal GCV (bomb calorimeter)</option>
+      <option value="proximate">Coal proximate analysis (%)</option>
+      <option value="ultimate">Coal ultimate analysis (oxygen by difference)</option>
     </select>
   </div>
 
@@ -1060,6 +1062,31 @@ restoreAuth()}init();
   res.innerHTML='<strong>Gross calorific value = '+gcv.toFixed(2)+' kcal/kg</strong><p>GCV = [(W × ΔT) − corrections] / sample mass</p><p>= [('+waterEq+' × '+rise+') − '+corr+'] / '+mass+' g</p><p>Heat released = '+heat.toFixed(2)+' cal. Since cal/g is numerically equal to kcal/kg, result = '+gcv.toFixed(2)+' kcal/kg.</p><p class="tutor-muted tutor-small">This simplified calculation assumes W is the total calorimeter water equivalent and ΔT is corrected. Apply instrument-specific corrections and reporting basis (as-received, air-dried, or dry) as required.</p>';
  };
  ['tutorGCVMass','tutorGCVWaterEq','tutorGCVRise','tutorGCVCorrections'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ mode.addEventListener('change',calc);calc();
+})();
+(function(){
+ const panel=document.createElement('div');panel.id='tutorCoalAnalysisFields';panel.hidden=true;
+ panel.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorCoalMoisture">Moisture (%)</label><input id="tutorCoalMoisture" type="number" min="0" step="any" value="5"></div><div class="tutor-field"><label for="tutorCoalAsh">Ash (%)</label><input id="tutorCoalAsh" type="number" min="0" step="any" value="10"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorCoalVM">Volatile matter (%)</label><input id="tutorCoalVM" type="number" min="0" step="any" value="25"></div><div class="tutor-field"><label for="tutorCoalC">Carbon (%) — ultimate</label><input id="tutorCoalC" type="number" min="0" step="any" value="65"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorCoalH">Hydrogen (%)</label><input id="tutorCoalH" type="number" min="0" step="any" value="4"></div><div class="tutor-field"><label for="tutorCoalN">Nitrogen (%)</label><input id="tutorCoalN" type="number" min="0" step="any" value="1"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorCoalS">Sulfur (%)</label><input id="tutorCoalS" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorCoalO">Oxygen (%) — optional measured value</label><input id="tutorCoalO" type="number" min="0" step="any" placeholder="Leave blank for by difference"></div></div><p class="tutor-muted tutor-small">All percentages must be reported on the same basis (as-received, air-dried, dry or dry ash-free). Do not mix bases. Oxygen by difference is an estimate and must account for ash/moisture basis according to the lab standard.</p>';
+ document.getElementById('tutorGCVFields').after(panel);
+ const prior=calc;
+ calc=function(){
+  const t=mode.value, coal=['proximate','ultimate'].includes(t);panel.hidden=!coal;
+  if(!coal){prior();return}
+  const val=id=>{const el=document.getElementById(id);return el.value.trim()===''?null:Number(el.value)};
+  if(t==='proximate'){
+   const m=val('tutorCoalMoisture'),a=val('tutorCoalAsh'),v=val('tutorCoalVM');
+   if(![m,a,v].every(x=>x!==null&&Number.isFinite(x)&&x>=0)||m+a+v>100){res.innerHTML='<strong>Invalid proximate-analysis inputs</strong><p>Enter non-negative percentages on one common basis; moisture + ash + volatile matter must not exceed 100%.</p>';return}
+   const fc=100-m-a-v;
+   res.innerHTML='<strong>Fixed carbon = '+fc.toFixed(2)+'%</strong><p>FC (%) = 100 − Moisture − Ash − Volatile Matter</p><p>= 100 − '+m+' − '+a+' − '+v+' = '+fc.toFixed(2)+'%</p><p class="tutor-muted tutor-small">Fixed carbon by difference; report on the same analytical basis as the other values.</p>';return
+  }
+  const c=val('tutorCoalC'),h=val('tutorCoalH'),n=val('tutorCoalN'),sul=val('tutorCoalS'),ash=val('tutorCoalAsh'),m=val('tutorCoalMoisture'),o=val('tutorCoalO');
+  const required=[c,h,n,sul,ash,m];
+  if(!required.every(x=>x!==null&&Number.isFinite(x)&&x>=0)||required.reduce((a,b)=>a+b,0)>100||(o!==null&&(!Number.isFinite(o)||o<0))){res.innerHTML='<strong>Invalid ultimate-analysis inputs</strong><p>Enter non-negative percentages and ensure the sum of C, H, N, S, ash and moisture is ≤100%.</p>';return}
+  const oxygen=o===null?100-(c+h+n+sul+ash+m):o;
+  if(oxygen<0||c+h+n+sul+ash+m+oxygen>100.0001){res.innerHTML='<strong>Check analytical basis</strong><p>Oxygen by difference is negative or the reported components exceed 100%. Verify basis and whether ash/moisture should be included.</p>';return}
+  res.innerHTML='<strong>Oxygen '+(o===null?'by difference':'(entered)')+' = '+oxygen.toFixed(2)+'%</strong><p>O (%) = 100 − C − H − N − S − ash − moisture</p><p class="tutor-muted tutor-small">Use only when all listed components are on the same basis. Depending on the standard, oxygen by difference may use a different basis or additional components; this generic calculation is a screening aid, not a report-ready standard method.</p>';
+ };
+ ['tutorCoalMoisture','tutorCoalAsh','tutorCoalVM','tutorCoalC','tutorCoalH','tutorCoalN','tutorCoalS','tutorCoalO'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
  mode.addEventListener('change',calc);calc();
 })();
 (function(){
