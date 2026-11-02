@@ -756,7 +756,7 @@ def test_mobile_layout_has_no_page_level_horizontal_overflow():
         browser = p.chromium.launch()
         errors = []
         try:
-            for width, height in [(320, 720), (360, 800), (390, 844), (768, 1024)]:
+            for width, height in [(320, 720), (360, 800), (390, 844), (430, 932), (768, 1024), (800, 900), (820, 1180), (1024, 768)]:
                 page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=1)
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.route("**/api/**", lambda route: route.fulfill(
