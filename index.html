@@ -1165,6 +1165,7 @@ restoreAuth()}init();
  document.getElementById('fbForm').addEventListener('submit',async e=>{e.preventDefault();const q=i.value.trim();if(!q)return;add(q,true);i.value='';add('Thinking…',false);const pending=m.lastElementChild?.querySelector('.fb-msg');const instant=solveChemistryExpression(q);if(instant){if(pending)pending.textContent=instant;return}try{if(pending)pending.textContent=await askWebChemAI('firebot',q)}catch(err){const offline=getOfflineChemistryAnswer(q);if(pending)pending.textContent=offline?offline+'\n\n(Offline mode — advanced AI resumes when API credits are available.)':'Offline mode: '+err.message+'\nTry molarity, normality, urea, XRF, XRD, AAS, OES, EDTA or pH.'}});
  document.querySelectorAll('[data-fb-q]').forEach(b=>b.addEventListener('click',()=>{i.value=b.dataset.fbQ;i.focus()}));
 })();
+})();
 
 /* FireBot autonomous roaming controller */
 (function(){
