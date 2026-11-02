@@ -844,7 +844,7 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1280, "height": 900})
         browser_errors = []
-        page.on("pageerror", lambda error: browser_errors.append(str(error)))
+        page.on("pageerror", lambda error: browser_errors.append(f"{error}\nSTACK: {error.stack}"))
         page.on("console", lambda message: browser_errors.append(f"console.{message.type}: {message.text}") if message.type == "error" else None)
         page.route("**/api/**", lambda route: route.fulfill(
             status=401 if route.request.url.endswith("/api/auth/me") else 200,
