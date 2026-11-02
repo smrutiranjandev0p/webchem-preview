@@ -1,4 +1,4 @@
-const CACHE_NAME='webchem-shell-v2';
+const CACHE_NAME='webchem-shell-v3';
 const BASE=new URL('./',self.location.href);
 const SHELL=[new URL('./',BASE).href,new URL('./index.html',BASE).href,new URL('./manifest.webmanifest',BASE).href];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()))});
