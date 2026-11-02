@@ -253,3 +253,59 @@ def test_cloud_save_failure_keeps_dirty_and_recovers_on_retry():
             assert put_calls["count"] >= 2, f"Expected failed PUT followed by retry, got {put_calls}"
         finally:
             browser.close()
+
+
+def test_cloud_load_recovers_after_network_returns():
+    """A later successful cloud read restores readiness without losing local items."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        get_calls = {"count": 0}
+
+        def api_mock(route):
+            req = route.request
+            if req.url.endswith("/api/auth/me"):
+                route.fulfill(status=401, content_type="application/json",
+                              body='{"success":false,"error":"Unauthenticated"}')
+            elif req.url.endswith("/api/progress") and req.method == "GET":
+                get_calls["count"] += 1
+                if get_calls["count"] == 1:
+                    route.fulfill(status=503, content_type="application/json",
+                                  body='{"success":false,"error":"offline"}')
+                else:
+                    route.fulfill(status=200, content_type="application/json",
+                                  body='{"success":true,"progress":{"completed":["cloud-restored-marker"]}}')
+            elif req.url.endswith("/api/progress") and req.method == "PUT":
+                route.fulfill(status=200, content_type="application/json",
+                              body='{"success":true}')
+            else:
+                route.fulfill(status=200, content_type="application/json",
+                              body='{"success":true}')
+        page.route("**/api/**", api_mock)
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const user={id:'network-recovery-user',username:'Network Recovery'};
+              await gateSuccess({token:'network-recovery-token',user});
+              const key=userStateKey(user);
+              localStorage.setItem(key,JSON.stringify({...defaultState,completed:['local-offline-marker']}));
+              state.completed=['local-offline-marker'];
+              await loadCloudProgress(user,{mergeGuest:false});
+              const afterOffline={ready:cloudReady,local:[...state.completed]};
+              await loadCloudProgress(user,{mergeGuest:false});
+              return {
+                afterOffline,
+                afterRecovery:{ready:cloudReady,items:[...state.completed]},
+                stored:JSON.parse(localStorage.getItem(key)||'{}').completed
+              };
+            }""")
+            assert result["afterOffline"]["ready"] is False, f"Expected cloud unavailable after first GET: {result}"
+            assert "local-offline-marker" in result["afterOffline"]["local"], f"Local progress lost while offline: {result}"
+            assert result["afterRecovery"]["ready"] is True, f"Cloud did not recover after successful GET: {result}"
+            assert "local-offline-marker" in result["afterRecovery"]["items"], f"Local progress lost during recovery: {result}"
+            assert "cloud-restored-marker" in result["afterRecovery"]["items"], f"Cloud progress not restored: {result}"
+            assert "local-offline-marker" in result["stored"], f"Recovered local progress not persisted: {result}"
+            assert get_calls["count"] >= 2, f"Expected failed then successful GET, got {get_calls}"
+        finally:
+            browser.close()
