@@ -110,7 +110,7 @@ def test_account_switch_isolation_with_mocked_cloud_api():
               t.state.completed=['B-only-marker']; t.save();
               t.logout();
               return {
-                active:t.currentUser,
+                active:currentUser:t.currentUser,
                 token:localStorage.getItem(t.AUTH_TOKEN_KEY),
                 guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}'),
                 accountB:JSON.parse(localStorage.getItem(t.userStateKey({id:'account-B'}))||'{}')
@@ -231,10 +231,10 @@ def test_cloud_save_failure_keeps_dirty_and_recovers_on_retry():
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
             result = page.evaluate("""async () => {const t=window.__WEBCHEM_TEST__;
-              const user={id:'t.save-retry-user',username:'Save Retry User'};
-              await t.gateSuccess({token:'t.save-retry-token',user});
+              const user={id:'save-retry-user',username:'Save Retry User'};
+              await t.gateSuccess({token:'save-retry-token',user});
               await t.loadCloudProgress(user,{mergeGuest:false});
-              t.state.completed=['cloud-t.save-retry-marker'];
+              t.state.completed=['cloud-save-retry-marker'];
               t.save();
               // First explicit flush hits the simulated 503.
               await t.syncProgressToCloud();
@@ -339,13 +339,13 @@ def test_stale_cloud_response_after_logout_is_ignored():
               const pending=t.loadCloudProgress(user,{mergeGuest:false});
               // Logout changes the session version before the old response arrives.
               t.logout();
-              t.state.completed=['guest-after-t.logout'];
+              t.state.completed=['guest-after-logout'];
               t.save();
               resolveFetch({ok:true,json:async()=>({success:true,progress:{completed:['stale-cloud-marker']}})});
               await pending;
               window.fetch=originalFetch;
               return {
-                t.currentUser,
+                currentUser:t.currentUser,
                 ready:t.cloudReady,
                 dirty:t.cloudDirty,
                 guest:JSON.parse(localStorage.getItem(t.GUEST_STATE_KEY)||'{}').completed,
@@ -376,28 +376,28 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(400)
             result = page.evaluate("""async () => {const t=window.__WEBCHEM_TEST__;
-              const user={id:'pending-t.save-user',username:'Pending Save'};
-              localStorage.setItem(t.AUTH_TOKEN_KEY,'pending-t.save-token');
+              const user={id:'pending-save-user',username:'Pending Save'};
+              localStorage.setItem(t.AUTH_TOKEN_KEY,'pending-save-token');
               t.currentUser=user;
               t.cloudReady=true;
               t.cloudDirty=true;
               t.cloudSyncBusy=false;
               t.cloudSessionVersion++;
               t.cloudStateVersion++;
-              t.state.completed=['account-before-t.logout'];
+              t.state.completed=['account-before-logout'];
               localStorage.setItem(t.userStateKey(user),JSON.stringify(t.state));
               const originalFetch=window.fetch;
               let resolveFetch;
               window.fetch=()=>new Promise(resolve=>{resolveFetch=resolve});
               const pending=t.syncProgressToCloud();
               t.logout();
-              t.state.completed=['guest-after-t.save-t.logout'];
+              t.state.completed=['guest-after-save-logout'];
               t.save();
               resolveFetch({ok:true,json:async()=>({success:true})});
               await pending;
               window.fetch=originalFetch;
               return {
-                t.currentUser,
+                currentUser:t.currentUser,
                 ready:t.cloudReady,
                 dirty:t.cloudDirty,
                 busy:t.cloudSyncBusy,
