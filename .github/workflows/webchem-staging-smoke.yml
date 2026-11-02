@@ -34,7 +34,9 @@ jobs:
         env:
           WEBCHEM_FRONTEND_URL: http://127.0.0.1:8000/
           WEBCHEM_API_URL: https://beneficial-balance-staging.up.railway.app
-        run: pytest -vv -s tests/test_staging_smoke.py
+        run: |
+          mkdir -p artifacts
+          pytest -vv -s --junitxml=artifacts/junit.xml tests/test_staging_smoke.py
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
