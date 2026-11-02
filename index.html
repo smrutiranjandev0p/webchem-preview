@@ -196,6 +196,12 @@ body[data-theme="light"] .authbtn{background:#fff;color:#203943;border-color:#d2
 body[data-theme="light"] .sidebottom{background:linear-gradient(145deg,#dff3ed,#e8f1f5);border-color:#c5e0d8}body[data-theme="light"] .sidebottom p{color:#526a74}body[data-theme="light"] .heroMain:after{color:#087f6815}
 body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"] .auth-showcase{background:linear-gradient(145deg,#e0f3ed,#edf3f8);border-color:#d4e2e6}body[data-theme="light"] .auth-show-brand,body[data-theme="light"] .auth-show-copy h2{color:#172a33}body[data-theme="light"] .auth-show-copy p{color:#526a74}body[data-theme="light"] .auth-form-side{background:transparent}body[data-theme="light"] #authGate .gate-card{color:#172a33}body[data-theme="light"] #authGate .gate-card p,body[data-theme="light"] #authGate .gate-card label{color:#526a74}body[data-theme="light"] #authGate .gate-card input{background:#fff;color:#172a33;border-color:#cfdee2}body[data-theme="light"] #authGate .gate-foot{color:#71858f;border-color:#d7e2e6}body[data-theme="light"] #authGate .auth-secure,body[data-theme="light"] #authGate .auth-version{color:#526a74}
 @media(max-width:700px){.topactions{gap:5px}.authstatus{max-width:58px;font-size:10px}.theme-select{max-width:76px;height:34px;padding:0 5px;font-size:10px}.logout-compact{padding:6px 8px;min-height:34px}.logout-compact span:last-child{display:none}.authbtn{min-height:34px}.avatar{width:34px;height:34px;flex-basis:34px}.search{width:min(34vw,170px)}}
+
+/* Password visibility toggle for all auth stages */
+.gate-password-wrap{position:relative;width:100%;margin-top:7px}
+.gate-card .gate-password-wrap input{margin-top:0;padding-right:54px}
+.gate-password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;border-radius:9px;background:transparent;color:#8ee2c3;font-size:21px;display:grid;place-items:center;padding:0;z-index:2}
+.gate-password-toggle:focus-visible{outline:2px solid #8ee2c3;outline-offset:2px}
 </style><style>
 /* Mobile drawer navigation refresh — WebChem */
 .menu-trigger{display:none;flex:0 0 40px;width:40px;height:40px;place-items:center;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font-size:20px;box-shadow:0 0 18px #75f0c20d}
@@ -798,6 +804,16 @@ function gateView(stage,email=''){
  if(stage==='forgot')html='<h1>Forgot password?</h1><p>We will send a one-time code if the email belongs to an account.</p><label>Email<input id="gateEmail" type="email" value="'+em+'"></label><button class="gate-primary" id="gateSendReset">Send OTP</button><button class="gate-link" id="gateLogin">Back to sign in</button>';
  if(stage==='reset')html='<h1>Choose a new password</h1><p>OTP sent to <b>'+em+'</b>.</p><label>6-digit OTP<input id="gateOtp" inputmode="numeric" maxlength="6"></label><label>New password<input id="gatePassword" type="password" autocomplete="new-password"></label><button class="gate-primary" id="gateReset">Update password</button><button class="gate-link" id="gateLogin">Back to sign in</button>';
  root.innerHTML=html;
+ // Add accessible show/hide controls to login, registration and password-reset inputs.
+ root.querySelectorAll('input[type="password"]').forEach(input=>{
+  if(input.dataset.visibilityToggleAdded)return;
+  input.dataset.visibilityToggleAdded='true';
+  const wrap=document.createElement('div');wrap.className='gate-password-wrap';
+  input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='gate-password-toggle';toggle.textContent='👁️';toggle.setAttribute('aria-label','Show password');toggle.setAttribute('aria-pressed','false');
+  toggle.addEventListener('click',()=>togglePassword(input.id,toggle));
+  wrap.appendChild(toggle);
+ });
  const on=(id,fn)=>document.getElementById(id)?.addEventListener('click',fn);
  on('gateRegister',()=>gateView('register'));on('gateLogin',()=>gateView('login'));on('gateForgot',()=>gateView('forgot',document.getElementById('gateEmail')?.value.trim()));
  on('gateSubmit',gateSubmit);on('gateVerify',gateVerify);on('gateResend',gateResend);on('gateSendReset',gateSendReset);on('gateReset',gateReset);
