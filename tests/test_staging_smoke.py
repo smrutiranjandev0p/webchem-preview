@@ -814,18 +814,18 @@ def test_mobile_navigation_drawer_opens_and_closes_accessibly():
 
             trigger.click()
             assert page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
-            assert await trigger.get_attribute("aria-expanded") == "true"
-            assert await trigger.get_attribute("aria-label") == "Close navigation"
+            assert trigger.get_attribute("aria-expanded") == "true"
+            assert trigger.get_attribute("aria-label") == "Close navigation"
             assert scrim.get_attribute("aria-hidden") == "false"
 
             page.keyboard.press("Escape")
-            assert not await page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
-            assert await trigger.get_attribute("aria-expanded") == "false"
-            assert await scrim.get_attribute("aria-hidden") == "true"
+            assert not page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
+            assert trigger.get_attribute("aria-expanded") == "false"
+            assert scrim.get_attribute("aria-hidden") == "true"
 
-            await trigger.click()
+            trigger.click()
             scrim.click(position={"x": 5, "y": 5})
-            assert not await page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
-            assert await trigger.get_attribute("aria-expanded") == "false"
+            assert not page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
+            assert trigger.get_attribute("aria-expanded") == "false"
         finally:
             browser.close()
