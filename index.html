@@ -479,6 +479,7 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
       <option value="proximate">Coal proximate analysis (%)</option>
       <option value="ultimate">Coal ultimate analysis (oxygen by difference)</option>
       <option value="dose">Water-treatment chemical dosing</option>
+      <option value="solutionprep">Solution preparation (mass / dilution)</option>
     </select>
   </div>
 
@@ -1104,6 +1105,33 @@ restoreAuth()}init();
   res.innerHTML='<strong>Active chemical required = '+kg.toFixed(3)+' kg/day</strong><p>Mass = dose (mg/L) × flow (m³/day) ÷ 1000</p><p>Required solution ≈ '+liters.toFixed(3)+' L/day</p><p>Solution volume = active chemical mass ÷ [density × (wt%/100)]</p><p class="tutor-muted tutor-small">Assumes dose is expressed as active chemical and solution strength is mass fraction. Verify product concentration, density, process demand and plant operating conditions before applying.</p>';
  };
  ['tutorDoseTarget','tutorDoseFlow','tutorDoseStrength','tutorDoseDensity'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ mode.addEventListener('change',calc);calc();
+})();
+(function(){
+ const panel=document.createElement('div');panel.id='tutorSolutionPrepFields';panel.hidden=true;
+ panel.innerHTML='<div class="tutor-fields"><div class="tutor-field"><label for="tutorPrepMode">Preparation method</label><select id="tutorPrepMode"><option value="solid">Prepare from solid (Molarity)</option><option value="dilute">Dilute stock solution</option><option value="percent">Prepare mass % solution</option></select></div><div class="tutor-field"><label for="tutorPrepMW">Molar mass (g/mol)</label><input id="tutorPrepMW" type="number" min="0" step="any" value="58.44"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorPrepConc">Target concentration (mol/L or %)</label><input id="tutorPrepConc" type="number" min="0" step="any" value="0.1"></div><div class="tutor-field"><label for="tutorPrepVol">Final volume (L)</label><input id="tutorPrepVol" type="number" min="0" step="any" value="1"></div></div><div class="tutor-fields"><div class="tutor-field"><label for="tutorPrepStock">Stock concentration (mol/L)</label><input id="tutorPrepStock" type="number" min="0" step="any" value="1"></div><div class="tutor-field"><label for="tutorPrepDensity">Final solution mass (g) — for mass %</label><input id="tutorPrepDensity" type="number" min="0" step="any" value="1000"></div></div><p class="tutor-muted tutor-small">For solid preparation, calculate solute mass and make up to final volume. For dilution, use C₁V₁=C₂V₂. For mass %, use solute mass / total solution mass ×100. Add acid to water and follow your lab SOP/PPE.</p>';
+ document.getElementById('tutorDoseFields').after(panel);
+ const prev=calc;
+ calc=function(){
+  const active=mode.value==='solutionprep';panel.hidden=!active;
+  if(!active){prev();return}
+  const method=document.getElementById('tutorPrepMode').value,mw=Number(document.getElementById('tutorPrepMW').value),c=Number(document.getElementById('tutorPrepConc').value),v=Number(document.getElementById('tutorPrepVol').value),stock=Number(document.getElementById('tutorPrepStock').value),total=Number(document.getElementById('tutorPrepDensity').value);
+  if(![mw,c,v,stock,total].every(Number.isFinite)||mw<=0||c<0||v<=0||stock<=0||total<=0){res.innerHTML='<strong>Check inputs</strong><p>Molar mass, final volume, stock concentration and solution mass must be positive; target concentration must be non-negative.</p>';return}
+  if(method==='solid'){
+   const grams=c*v*mw;
+   res.innerHTML='<strong>Required solute mass = '+grams.toFixed(4)+' g</strong><p>m = C × V × Mᵣ = '+c+' × '+v+' × '+mw+'.</p><p>Dissolve and make up to a final volume of '+v+' L.</p>';return
+  }
+  if(method==='dilute'){
+   if(c>stock){res.innerHTML='<strong>Target exceeds stock concentration</strong><p>Choose a more concentrated stock or a different target.</p>';return}
+   const ml=c*v/stock*1000;
+   res.innerHTML='<strong>Stock volume = '+ml.toFixed(3)+' mL</strong><p>V₁ = C₂V₂/C₁ = '+c+' × '+v+' / '+stock+'.</p><p>Measure stock and dilute to a final volume of '+v+' L.</p>';return
+  }
+  if(c>100){res.innerHTML='<strong>Target mass percentage must be ≤100%</strong>';return}
+  const grams=c/100*total;
+  res.innerHTML='<strong>Solute mass = '+grams.toFixed(3)+' g</strong><p>Mass of solute = (mass % / 100) × total solution mass.</p><p>= '+c+'/100 × '+total+' g.</p><p>Use total solution mass, not solvent mass.</p>';
+ };
+ ['tutorPrepMW','tutorPrepConc','tutorPrepVol','tutorPrepStock','tutorPrepDensity','tutorPrepMode'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+ document.getElementById('tutorPrepMode').addEventListener('change',calc);
  mode.addEventListener('change',calc);calc();
 })();
 (function(){
