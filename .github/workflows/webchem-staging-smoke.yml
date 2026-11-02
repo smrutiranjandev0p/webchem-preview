@@ -12,7 +12,7 @@ permissions:
 jobs:
   staging-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,7 +21,7 @@ jobs:
       - name: Install browser test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest playwright
+          pip install pytest pytest-timeout playwright
           python -m playwright install --with-deps chromium
       - name: Serve current staging branch
         run: |
@@ -46,18 +46,6 @@ jobs:
           PY
           npm install --no-save acorn
           node -e 'const fs=require("fs"),acorn=require("acorn");for(let i=0;i<20;i++){let p="/tmp/webchem-inline-"+i+".js";if(!fs.existsSync(p))break;let s=fs.readFileSync(p,"utf8");try{acorn.parse(s,{ecmaVersion:"latest",sourceType:"script",allowAwaitOutsideFunction:true,locations:true})}catch(e){let n=Math.min(e.pos||s.length,s.length),loc=e.loc;console.error("Acorn script "+i+": "+e.message+" at "+(loc?loc.line:"?")+":"+(loc?loc.column+1:"?")+" offset "+n+" (source length "+s.length+")");console.error(s.slice(Math.max(0,n-600),Math.min(s.length,n+600)));}}'
-          node - <<'NODE'
-          const fs=require('fs'), acorn=require('acorn');
-          const s=fs.readFileSync('/tmp/webchem-inline-0.js','utf8');
-          const tok=acorn.tokenizer(s,{ecmaVersion:'latest',allowAwaitOutsideFunction:true,locations:true});
-          const stack=[], pairs={')':'(',']':'[','}':'{' }; let t;
-          while((t=tok.getToken()).type.label!=='eof') {
-            const z=t.type.label;
-            if(['(','[','{'].includes(z)) stack.push({token:z,line:t.loc.start.line,column:t.loc.start.column+1});
-            else if(pairs[z]) { const top=stack.pop(); if(!top||top.token!==pairs[z]) { console.error('Mismatch',z,t.loc.start); break; } }
-          }
-          console.error('Unclosed delimiters (last 30):',JSON.stringify(stack.slice(-30)));
-          NODE
           for script in /tmp/webchem-inline-*.js; do node --check "$script"; done
       - name: Run browser and account-isolation tests
         env:
@@ -65,7 +53,7 @@ jobs:
           WEBCHEM_API_URL: https://beneficial-balance-staging.up.railway.app
         run: |
           mkdir -p artifacts
-          pytest -vv -s --junitxml=artifacts/junit.xml tests/test_staging_smoke.py
+          pytest -vv -s --timeout=60 --timeout-method=thread --junitxml=artifacts/junit.xml tests/test_staging_smoke.py
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
