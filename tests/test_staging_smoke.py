@@ -392,17 +392,20 @@ def test_stale_cloud_save_response_after_logout_is_ignored():
               t.state.completed=['account-before-logout'];
               localStorage.setItem(t.userStateKey(user),JSON.stringify(t.state));
               const originalFetch=window.fetch;
-              let resolveFetch, fetchSignal=null;
+              let resolveFetch, fetchSignal=null, fetchStartedResolve;
+              const fetchStarted=new Promise(resolve=>{fetchStartedResolve=resolve});
               // Model browser fetch cancellation: an aborted request rejects promptly.
               window.fetch=(_url,options={})=>new Promise((resolve,reject)=>{
                 resolveFetch=resolve;
                 fetchSignal=options.signal||null;
+                fetchStartedResolve(); // Confirm the PUT reached fetch before logout.
                 if(fetchSignal){
                   if(fetchSignal.aborted)reject(new DOMException('Aborted','AbortError'));
                   else fetchSignal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true});
                 }
               });
               const pending=t.syncProgressToCloud();
+              await fetchStarted;
               t.logout(); // Must abort the in-flight PUT and reset cloud flags.
               t.state.completed=['guest-after-save-logout'];
               t.save();
