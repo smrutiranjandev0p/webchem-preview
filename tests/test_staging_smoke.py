@@ -875,11 +875,16 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
                 snapshot = page.evaluate("""() => ({area:document.querySelector("#quizArea")?.innerText, topic:document.querySelector("#quizTopic")?.value, mode:document.querySelector("#quizMode")?.value, button:document.querySelector("#startQuizBtn")?.outerHTML})""")
                 raise AssertionError(f"CBT did not start; browser errors={browser_errors}; page={snapshot}") from exc
 
-            # Answer then clear: clearing must return the question to unanswered.
+            # CBT answer selection/clearing must not award points before final submission.
+            points_before = page.evaluate("window.__WEBCHEM_TEST__.state.points")
+            correct_before = page.evaluate("window.__WEBCHEM_TEST__.state.correct")
             page.locator("[data-answer]").first.click()
             assert page.locator(".quiz-palette-btn.answered").count() == 1
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.points") == points_before, "CBT points must be awarded only at final submission"
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.correct") == correct_before, "CBT correct-count must be finalized only once"
             page.locator("#clearAnswer").click()
             assert page.locator(".quiz-palette-btn.answered").count() == 0
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.points") == points_before, "Clearing a CBT answer must not alter points"
 
             # Mark for review, move to question 2, then return through palette.
             page.locator("#markQuestion").click()
@@ -905,6 +910,8 @@ def test_cbt_quiz_navigation_mark_clear_and_submission():
             assert history[-1]["correct"] + history[-1]["wrong"] == 1, f"One response should be scored: {history[-1]}"
             assert history[-1]["unanswered"] == 9, f"Expected nine unanswered questions: {history[-1]}"
             assert 0 <= history[-1]["percent"] <= 100, f"Invalid CBT percentage: {history[-1]}"
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.points") == points_before + history[-1]["correct"] * 5, "CBT should award exactly five points per correct answer, once"
+            assert page.evaluate("window.__WEBCHEM_TEST__.state.correct") == correct_before + history[-1]["correct"], "CBT correct-answer count should increment exactly once per correct answer"
             assert page.locator(".quiz-review-row").count() == 10, "Result should show one review row per question"
             export_button = page.get_by_role("button", name="Export result (CSV)")
             assert export_button.is_visible()
