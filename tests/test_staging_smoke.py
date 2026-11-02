@@ -793,3 +793,39 @@ def test_mobile_layout_has_no_page_level_horizontal_overflow():
             assert not errors, "Uncaught responsive JS errors:\\n" + "\\n".join(errors)
         finally:
             browser.close()
+
+def test_mobile_navigation_drawer_opens_and_closes_accessibly():
+    """Mobile menu must toggle state, expose ARIA state, and close via Escape/scrim."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=401 if route.request.url.endswith("/api/auth/me") else 200,
+            content_type="application/json",
+            body='{"success":false,"error":"Unauthenticated"}' if route.request.url.endswith("/api/auth/me") else '{"success":true}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            trigger = page.locator("#menuTrigger")
+            scrim = page.locator("#drawerScrim")
+            page.wait_for_selector("#authGate", timeout=15_000)
+            assert await trigger.is_visible(), "Mobile navigation trigger should be visible"
+            assert await trigger.get_attribute("aria-expanded") == "false"
+
+            await trigger.click()
+            assert await page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
+            assert await trigger.get_attribute("aria-expanded") == "true"
+            assert await trigger.get_attribute("aria-label") == "Close navigation"
+            assert await scrim.get_attribute("aria-hidden") == "false"
+
+            await page.keyboard.press("Escape")
+            assert not await page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
+            assert await trigger.get_attribute("aria-expanded") == "false"
+            assert await scrim.get_attribute("aria-hidden") == "true"
+
+            await trigger.click()
+            await scrim.click(position={"x": 5, "y": 5})
+            assert not await page.locator("body").evaluate("(el) => el.classList.contains('drawer-open')")
+            assert await trigger.get_attribute("aria-expanded") == "false"
+        finally:
+            browser.close()
