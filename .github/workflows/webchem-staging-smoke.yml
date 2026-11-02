@@ -6,6 +6,9 @@ on:
       - staging-cloud-account-isolation
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   staging-smoke:
     runs-on: ubuntu-latest
@@ -23,4 +26,12 @@ jobs:
       - name: Run staging smoke tests
         env:
           WEBCHEM_STAGING_URL: https://beneficial-balance-staging.up.railway.app
-        run: pytest -q tests/test_staging_smoke.py
+        run: pytest -vv -s tests/test_staging_smoke.py
+      - name: Upload browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webchem-staging-browser-diagnostics
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
