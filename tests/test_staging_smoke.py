@@ -67,17 +67,17 @@ def test_account_switch_isolation_with_mocked_cloud_api():
                 route.fulfill(status=401, content_type="application/json",
                                     body='{"success":false,"error":"Unauthenticated"}')
             elif url.endswith("/api/health"):
-                await route.fulfill(status=200, content_type="application/json",
+                route.fulfill(status=200, content_type="application/json",
                                     body='{"status":"ok"}')
             elif url.endswith("/api/progress") and req.method == "GET":
                 token = req.headers.get("authorization", "")
                 progress = {"completed": ["lesson-account-a"]} if token == "Bearer token-A" else {"completed": ["lesson-account-b"]}
-                await route.fulfill(status=200, content_type="application/json",
+                route.fulfill(status=200, content_type="application/json",
                                     body='{"success":true,"progress":' + __import__("json").dumps(progress) + '}')
             elif url.endswith("/api/progress") and req.method == "PUT":
-                await route.fulfill(status=200, content_type="application/json", body='{"success":true}')
+                route.fulfill(status=200, content_type="application/json", body='{"success":true}')
             else:
-                await route.fulfill(status=200, content_type="application/json", body='{"success":true}')
+                route.fulfill(status=200, content_type="application/json", body='{"success":true}')
         page.route("**/api/**", mock_api)
         try:
             page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
@@ -91,7 +91,7 @@ def test_account_switch_isolation_with_mocked_cloud_api():
               const b=JSON.parse(localStorage.getItem('webchem-state-user-account-b')||'{}');
               return {a,b,active:currentUser&&currentUser.id,legacy:localStorage.getItem(LEGACY_STATE_KEY)};
             }""")
-            result = await page.evaluate("""() => ({
+            result = page.evaluate("""() => ({
               a:JSON.parse(localStorage.getItem('webchem-state-user-account-a')||'{}'),
               b:JSON.parse(localStorage.getItem('webchem-state-user-account-b')||'{}'),
               active:currentUser&&currentUser.id
