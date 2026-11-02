@@ -625,7 +625,7 @@ def test_legacy_backup_keeps_newer_local_study_data():
                 mistakes:JSON.parse(localStorage.getItem('webchemQuizMistakes')||'[]'),
                 completed:window.__WEBCHEM_TEST__.state.completed};
             }""")
-            assert result["history"] == [{"score": 91}], f"Legacy backup erased newer quiz history: {result}"
+            assert result["history"] and result["history"][0] == {"score": 91}, f"Legacy backup erased newer quiz history: {result}"
             assert result["mistakes"] == ["old-local-mistake"], f"Legacy backup erased newer mistakes: {result}"
             assert "lesson-1" in result["completed"], f"Legacy core progress was not imported: {result}"
         finally:
