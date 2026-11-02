@@ -269,7 +269,7 @@ def test_cloud_load_recovers_after_network_returns():
                               body='{"success":false,"error":"Unauthenticated"}')
             elif req.url.endswith("/api/progress") and req.method == "GET":
                 get_calls["count"] += 1
-                if get_calls["count"] == 1:
+                if get_calls["count"] == 2:
                     route.fulfill(status=503, content_type="application/json",
                                   body='{"success":false,"error":"offline"}')
                 else:
