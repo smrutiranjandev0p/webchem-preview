@@ -212,6 +212,15 @@ body[data-theme="light"] .auth-layout{background:#f2f7f8}body[data-theme="light"
 @media(max-width:900px){.topbar{flex-wrap:wrap;align-items:flex-start}.topactions{flex-wrap:wrap;min-width:0;max-width:100%}.search{width:min(270px,100%);min-width:0}.main{min-width:0}.app,.main,.content,.main-content{max-width:100%;min-width:0}}@media(max-width:760px){.app{display:block;min-height:100vh}.sidebar{position:sticky;top:0;z-index:50;max-height:38vh;overflow:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;gap:12px}.sidebar .nav{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:4px}.sidebar .nav button,.sidebar .nav a{white-space:nowrap;flex:0 0 auto}.main,.content,.main-content{min-width:0;padding:14px!important}.heroStats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.lab-controls{grid-template-columns:1fr!important}.panel{max-width:100%;overflow-wrap:anywhere}.table-wrap,table{max-width:100%;overflow-x:auto}input,select,textarea{max-width:100%;min-width:0}button,.btn{min-height:40px}.app img{max-width:100%;height:auto}}
 @media(max-width:420px){.heroStats{grid-template-columns:1fr!important}.sidebar{max-height:32vh}.main,.content,.main-content{padding:10px!important}}
 </style><style>
+/* Mobile drawer navigation visibility hardening */
+@media(max-width:700px){
+ #appSidebar{display:flex!important;flex-direction:column!important}
+ #appSidebar>.brand{flex:0 0 auto!important}
+ #appSidebar>div:not(.brand){flex:0 0 auto!important;min-height:max-content!important}
+ #appSidebar #nav{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-rows:min-content!important;align-content:start!important;gap:6px!important;height:auto!important;max-height:none!important;overflow:visible!important;flex:0 0 auto!important}
+ #appSidebar #nav button[data-view]:not([data-view="knowledge-admin"]){display:flex!important;visibility:visible!important;opacity:1!important;position:relative!important;height:auto!important;min-height:46px!important;flex:0 0 auto!important;color:#a9bac4!important}
+ #appSidebar .sidebottom{flex:0 0 auto!important;margin-top:auto!important}
+}
 /* Mobile drawer navigation refresh — WebChem */
 .menu-trigger{display:none;flex:0 0 40px;width:40px;height:40px;place-items:center;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font-size:20px;box-shadow:0 0 18px #75f0c20d}
 .drawer-scrim{display:none}
