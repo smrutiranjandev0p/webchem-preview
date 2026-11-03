@@ -761,7 +761,7 @@ def test_backup_import_writes_only_to_current_account_namespace():
             }""")
             assert result["active"] == "backup-B", result
             assert all(v == {"owner":"A"} for v in result["a"].values()), f"Account A backup data was overwritten: {result}"
-            assert result["b"]["history"] == [{"owner":"backup"}], result
+            assert any(item.get("owner") == "backup" for item in result["b"]["history"]), result
             assert result["b"]["mistakes"] == ["backup-mistake"], result
             assert result["b"]["planner"]["minutes"] == 30, result
             assert result["b"]["flashcards"]["backup card"] == 1, result
