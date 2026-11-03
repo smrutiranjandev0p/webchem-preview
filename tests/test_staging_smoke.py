@@ -1263,3 +1263,23 @@ def test_study_planner_and_flashcards_are_account_scoped():
     assert "const KEY=learnerLocalKey('webchem-flashcards-v1')" in source
     assert "readBackupValue(learnerLocalKey('webchem-study-planner-v1'),{})" in source
     assert "readBackupValue(learnerLocalKey('webchem-flashcards-v1'),{})" in source
+
+
+
+def test_backend_health_endpoint_is_live():
+    """Release gate: the deployed staging API health route must be reachable."""
+    with sync_playwright() as p:
+        request = p.request.new_context()
+        try:
+            url = API_URL + "/api/health"
+            response = request.get(url, timeout=30_000)
+            print(f"\\n[backend] GET {url} -> HTTP {response.status}")
+            assert response.status == 200, (
+                f"Staging API health check failed with HTTP {response.status}; "
+                "check Railway deployment and service health"
+            )
+            payload = response.json()
+            assert isinstance(payload, dict), f"Health endpoint must return a JSON object: {payload!r}"
+            assert payload.get("status") == "ok", f"Unexpected staging health response: {payload}"
+        finally:
+            request.dispose()
