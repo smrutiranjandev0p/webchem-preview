@@ -1125,6 +1125,57 @@ def test_service_worker_never_caches_account_or_api_responses():
     assert "Never cache API/auth/progress responses" in source
 
 
+
+def test_learner_local_storage_helpers_isolate_accounts_and_guest():
+    """Runtime-check quiz, planner, flashcard, and profile key namespaces across account switches."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=200, content_type="application/json", body='{"success":true,"progress":{"completed":[]}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(500)
+            result = page.evaluate("""async () => {
+              const t=window.__WEBCHEM_TEST__;
+              const bases=['webchem-study-planner-v1','webchem-flashcards-v1','webchem-profile-details'];
+              await t.gateSuccess({token:'local-key-A',user:{id:'learner-A',username:'Learner A'}});
+              const a={local:bases.map(x=>learnerLocalKey(x)),history:quizHistoryKey(),mistakes:quizMistakesKey()};
+              a.local.forEach((k,i)=>localStorage.setItem(k,JSON.stringify({owner:'A',slot:i})));
+              localStorage.setItem(a.history,JSON.stringify([{owner:'A'}]));
+              localStorage.setItem(a.mistakes,JSON.stringify(['A-only']));
+              await t.gateSuccess({token:'local-key-B',user:{id:'learner-B',username:'Learner B'}});
+              const b={local:bases.map(x=>learnerLocalKey(x)),history:quizHistoryKey(),mistakes:quizMistakesKey()};
+              b.local.forEach((k,i)=>localStorage.setItem(k,JSON.stringify({owner:'B',slot:i})));
+              localStorage.setItem(b.history,JSON.stringify([{owner:'B'}]));
+              localStorage.setItem(b.mistakes,JSON.stringify(['B-only']));
+              const aRead={local:a.local.map(k=>JSON.parse(localStorage.getItem(k)||'null')),
+                history:JSON.parse(localStorage.getItem(a.history)||'null'),
+                mistakes:JSON.parse(localStorage.getItem(a.mistakes)||'null')};
+              const bRead={local:b.local.map(k=>JSON.parse(localStorage.getItem(k)||'null')),
+                history:JSON.parse(localStorage.getItem(b.history)||'null'),
+                mistakes:JSON.parse(localStorage.getItem(b.mistakes)||'null')};
+              t.logout();
+              const guest={local:bases.map(x=>learnerLocalKey(x)),history:quizHistoryKey(),mistakes:quizMistakesKey()};
+              return {a,b,aRead,bRead,guest};
+            }""")
+            assert result["a"]["local"] != result["b"]["local"], result
+            assert result["a"]["history"] != result["b"]["history"], result
+            assert result["a"]["mistakes"] != result["b"]["mistakes"], result
+            assert all(v["owner"] == "A" for v in result["aRead"]["local"]), result
+            assert result["aRead"]["history"][0]["owner"] == "A", result
+            assert result["aRead"]["mistakes"] == ["A-only"], result
+            assert all(v["owner"] == "B" for v in result["bRead"]["local"]), result
+            assert result["bRead"]["history"][0]["owner"] == "B", result
+            assert result["bRead"]["mistakes"] == ["B-only"], result
+            assert result["guest"]["local"] not in (result["a"]["local"], result["b"]["local"]), result
+            assert result["guest"]["history"] not in (result["a"]["history"], result["b"]["history"]), result
+            assert result["guest"]["mistakes"] not in (result["a"]["mistakes"], result["b"]["mistakes"]), result
+        finally:
+            browser.close()
+
+
 def test_profile_details_storage_is_account_scoped():
     """Prevent guest/account profile details from being shared in local storage."""
     source = Path("index.html").read_text(encoding="utf-8")
