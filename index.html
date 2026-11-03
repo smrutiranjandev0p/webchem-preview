@@ -1575,6 +1575,48 @@ function learnerLocalKey(base){const u=typeof currentUser!=='undefined'&&current
 {d:'analytical',q:'What is the difference between accuracy and precision?',a:'Accuracy is closeness to a reference/true value; precision is closeness among repeated measurements.'}
 ];const KEY=learnerLocalKey('webchem-flashcards-v1');let deck=[],idx=0,revealed=false;function data(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}}function save(d){try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}}function setup(){const d=document.getElementById('flashDeck')?.value||'all',order=document.getElementById('flashOrder')?.value||'shuffle',stats=data();deck=cards.filter(c=>d==='all'||c.d===d);if(order==='due')deck.sort((a,b)=>(stats[a.q]||0)-(stats[b.q]||0));else if(order==='shuffle')deck.sort(()=>Math.random()-.5);idx=0;revealed=false;render()}function render(){const card=deck[idx],q=document.getElementById('flashPrompt'),a=document.getElementById('flashAnswer'),cnt=document.getElementById('flashCount'),side=document.getElementById('flashSide'),master=document.getElementById('flashMastered');if(!q)return;if(!card){q.textContent='No cards in this deck';a.hidden=true;return}q.textContent=revealed?card.a:card.q;a.hidden=!revealed;side.textContent=revealed?'ANSWER':'QUESTION · TAP TO REVEAL';cnt.textContent=(idx+1)+' / '+deck.length;const st=data();master.textContent=Object.values(st).filter(v=>v>=2).length;if(!revealed)document.getElementById('flashFeedback').textContent='Try to answer from memory before revealing.'}function reveal(){revealed=true;render()}function rate(known){if(!deck.length)return;const st=data(),q=deck[idx].q;st[q]=Math.max(0,(st[q]||0)+(known?1:-1));save(st);document.getElementById('flashFeedback').textContent=known?'Marked as recalled. Keep reviewing for mastery.':'Added to practice priority.';next()}function next(){if(!deck.length)return;idx=(idx+1)%deck.length;revealed=false;render()}function prev(){if(!deck.length)return;idx=(idx-1+deck.length)%deck.length;revealed=false;render()}document.getElementById('flashDeck')?.addEventListener('change',setup);document.getElementById('flashOrder')?.addEventListener('change',setup);document.getElementById('flashCard')?.addEventListener('click',()=>revealed?((revealed=false),render()):reveal());document.getElementById('flashReveal')?.addEventListener('click',reveal);document.getElementById('flashNext')?.addEventListener('click',next);document.getElementById('flashPrev')?.addEventListener('click',prev);document.getElementById('flashAgain')?.addEventListener('click',()=>rate(false));document.getElementById('flashKnown')?.addEventListener('click',()=>rate(true));setup();})();
 
+
+/* PWA install + connection status: unobtrusive, mobile-first and safe for offline use. */
+(function initPWAControls(){
+  const actions=document.querySelector('.topactions');
+  if(!actions)return;
+  const status=document.createElement('span');
+  status.id='webchemConnectionStatus';
+  status.setAttribute('role','status');
+  status.setAttribute('aria-live','polite');
+  status.title='Connection status';
+  status.style.cssText='font-size:11px;color:var(--muted);white-space:nowrap;padding:4px 7px;border:1px solid var(--line);border-radius:9px';
+  const refreshStatus=()=>{const online=navigator.onLine;status.textContent=online?'● Online':'● Offline';status.style.color=online?'var(--mint)':'var(--yellow)';status.title=online?'Internet connection detected.':'Offline: cached shell and offline-capable tools remain available.'};
+  refreshStatus();
+  window.addEventListener('online',refreshStatus);
+  window.addEventListener('offline',refreshStatus);
+  const install=document.createElement('button');
+  install.id='webchemInstallBtn';install.className='btn small';install.type='button';
+  install.textContent='Install app';install.setAttribute('aria-label','Install WebChem as an app');
+  install.style.display='none';
+  actions.insertBefore(status,actions.firstChild);
+  actions.insertBefore(install,status.nextSibling);
+  let installEvent=null;
+  const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(isStandalone()){install.style.display='none';}
+  window.addEventListener('beforeinstallprompt',event=>{
+    event.preventDefault();installEvent=event;
+    if(!isStandalone())install.style.display='inline-flex';
+  });
+  install.addEventListener('click',async()=>{
+    if(installEvent){
+      installEvent.prompt();
+      try{const choice=await installEvent.userChoice;if(choice&&choice.outcome==='accepted')toast('WebChem install started');}
+      catch(err){console.warn('Install prompt could not be completed:',err)}
+      installEvent=null;install.style.display='none';
+    }else{
+      toast('Use your browser menu → Add to Home screen / Install app');
+    }
+  });
+  window.addEventListener('appinstalled',()=>{install.style.display='none';toast('WebChem installed successfully')});
+  window.matchMedia('(display-mode: standalone)').addEventListener?.('change',e=>{if(e.matches)install.style.display='none'});
+})();
+
 // Register service worker for installability and offline shell caching (GitHub Pages path-safe).
 if('serviceWorker' in navigator && location.protocol==='https:'){
  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('WebChem offline support unavailable:',err)));
