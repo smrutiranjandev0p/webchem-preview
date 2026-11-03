@@ -720,6 +720,58 @@ def test_full_backup_import_restores_all_v2_data():
 
 
 
+
+def test_backup_import_writes_only_to_current_account_namespace():
+    """Importing a backup while signed in must not overwrite another learner's local datasets."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.route("**/api/**", lambda route: route.fulfill(
+            status=200, content_type="application/json",
+            body='{"success":true,"progress":{"completed":[]}}'
+        ))
+        try:
+            page.goto(FRONTEND_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(400)
+            result = page.evaluate("""async () => {
+              const t=window.__WEBCHEM_TEST__;
+              await t.gateSuccess({token:'backup-user-A',user:{id:'backup-A',username:'Backup A'}});
+              const keysA={history:quizHistoryKey(),mistakes:quizMistakesKey(),
+                planner:learnerLocalKey('webchem-study-planner-v1'),
+                flashcards:learnerLocalKey('webchem-flashcards-v1'),
+                profile:learnerLocalKey('webchem-profile-details')};
+              Object.values(keysA).forEach(k=>localStorage.setItem(k,JSON.stringify({owner:'A'})));
+              await t.gateSuccess({token:'backup-user-B',user:{id:'backup-B',username:'Backup B'}});
+              const keysB={history:quizHistoryKey(),mistakes:quizMistakesKey(),
+                planner:learnerLocalKey('webchem-study-planner-v1'),
+                flashcards:learnerLocalKey('webchem-flashcards-v1'),
+                profile:learnerLocalKey('webchem-profile-details')};
+              const backup={version:2,state:{completed:['backup-imported-B']},
+                quizHistory:[{owner:'backup'}],quizMistakes:['backup-mistake'],
+                studyPlanner:{owner:'backup',minutes:30},flashcards:{'backup card':1},
+                profile:{name:'Imported for B'}};
+              window.confirm=()=>true;window.alert=()=>{};
+              const file=new File([JSON.stringify(backup)],'account-backup.json',{type:'application/json'});
+              importProgressBackup({files:[file],value:'account-backup.json'});
+              await new Promise(resolve=>setTimeout(resolve,100));
+              const read=k=>JSON.parse(localStorage.getItem(k)||'null');
+              return {keysA,keysB,a:Object.fromEntries(Object.entries(keysA).map(([n,k])=>[n,read(k)])),
+                b:Object.fromEntries(Object.entries(keysB).map(([n,k])=>[n,read(k)])),
+                active:t.currentUser&&t.currentUser.id,state:t.state};
+            }""")
+            assert result["active"] == "backup-B", result
+            assert all(v == {"owner":"A"} for v in result["a"].values()), f"Account A backup data was overwritten: {result}"
+            assert result["b"]["history"] == [{"owner":"backup"}], result
+            assert result["b"]["mistakes"] == ["backup-mistake"], result
+            assert result["b"]["planner"]["minutes"] == 30, result
+            assert result["b"]["flashcards"]["backup card"] == 1, result
+            assert result["b"]["profile"]["name"] == "Imported for B", result
+            assert "backup-imported-B" in result["state"]["completed"], result
+        finally:
+            browser.close()
+
+
+
 def test_backup_import_rejects_unknown_future_version_without_changes():
     """Do not silently interpret a backup from a newer incompatible format."""
     with sync_playwright() as p:
